@@ -1,0 +1,837 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "quem",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "novaRodada",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "cidMotivo",
+        "type": "string"
+      }
+    ],
+    "name": "Contestado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum OathChain.Veredito",
+        "name": "resultado",
+        "type": "uint8"
+      }
+    ],
+    "name": "Finalizado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "cid",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "hashConteudo",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "anexadaPor",
+        "type": "address"
+      }
+    ],
+    "name": "FonteAnexada",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "autor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum OathChain.Tipo",
+        "name": "tipo",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "cidConteudo",
+        "type": "string"
+      }
+    ],
+    "name": "RegistroCriado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "revisor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "ativo",
+        "type": "bool"
+      }
+    ],
+    "name": "RevisorAlterado",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      }
+    ],
+    "name": "SemConsenso",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "totalRevisores",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "fimVotacao",
+        "type": "uint64"
+      }
+    ],
+    "name": "VerificacaoAberta",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "revisor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum OathChain.Veredito",
+        "name": "voto",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "cidJustificativa",
+        "type": "string"
+      }
+    ],
+    "name": "VotoRegistrado",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_RODADAS",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "abrirVerificacao",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "cid",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "hashConteudo",
+        "type": "bytes32"
+      }
+    ],
+    "name": "anexarFonte",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "autorJaContestou",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "cidMotivo",
+        "type": "string"
+      }
+    ],
+    "name": "contestar",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "novaJanela",
+        "type": "uint64"
+      }
+    ],
+    "name": "definirJanelaVotacao",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "novo",
+        "type": "uint32"
+      }
+    ],
+    "name": "definirMinRevisores",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "revisor",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "ativo",
+        "type": "bool"
+      }
+    ],
+    "name": "definirRevisor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "ehRevisor",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "ehVerificado",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "epoca",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "finalizar",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "janelaVotacao",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minRevisores",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      },
+      {
+        "internalType": "enum OathChain.Veredito",
+        "name": "v",
+        "type": "uint8"
+      }
+    ],
+    "name": "obterContagem",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "obterFontes",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "cid",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "hashConteudo",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "anexadaPor",
+            "type": "address"
+          },
+          {
+            "internalType": "uint64",
+            "name": "data",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint32",
+            "name": "rodada",
+            "type": "uint32"
+          }
+        ],
+        "internalType": "struct OathChain.Fonte[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "obterRegistro",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "autor",
+            "type": "address"
+          },
+          {
+            "internalType": "enum OathChain.Tipo",
+            "name": "tipo",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "cidConteudo",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "hashCriterios",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "prazo",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "criadoEm",
+            "type": "uint64"
+          },
+          {
+            "internalType": "enum OathChain.Estado",
+            "name": "estado",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint32",
+            "name": "rodada",
+            "type": "uint32"
+          },
+          {
+            "internalType": "enum OathChain.Veredito",
+            "name": "resultado",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint32",
+            "name": "totalRevisores",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "epocaAbertura",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "fimVotacao",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct OathChain.Registro",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rodada",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "revisor",
+        "type": "address"
+      }
+    ],
+    "name": "obterVoto",
+    "outputs": [
+      {
+        "internalType": "enum OathChain.Veredito",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proximoId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "cidConteudo",
+        "type": "string"
+      }
+    ],
+    "name": "registrarAfirmacao",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "cidConteudo",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "hashCriterios",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint64",
+        "name": "prazo",
+        "type": "uint64"
+      }
+    ],
+    "name": "registrarPromessa",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "revisorEpoca",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "revisoresAtivos",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum OathChain.Veredito",
+        "name": "voto",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "cidJustificativa",
+        "type": "string"
+      }
+    ],
+    "name": "votar",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
