@@ -213,6 +213,44 @@
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "antigo",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "novo",
+        "type": "uint256"
+      }
+    ],
+    "name": "SuperacaoRevertida",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "antigo",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "novo",
+        "type": "uint256"
+      }
+    ],
+    "name": "Superada",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "id",
         "type": "uint256"
       },
@@ -369,6 +407,19 @@
         "type": "uint64"
       }
     ],
+    "name": "definirJanelaContestacao",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "novaJanela",
+        "type": "uint64"
+      }
+    ],
     "name": "definirJanelaVotacao",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -403,6 +454,25 @@
     "name": "definirRevisor",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "ehDefinitivo",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -467,6 +537,19 @@
     "name": "finalizar",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "janelaContestacao",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -646,11 +729,49 @@
             "internalType": "uint64",
             "name": "fimVotacao",
             "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "finalizadoEm",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "fimContestacao",
+            "type": "uint64"
+          },
+          {
+            "internalType": "string",
+            "name": "referencia",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "substitui",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "superadaPor",
+            "type": "uint256"
           }
         ],
         "internalType": "struct OathChain.Registro",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "obterRevisores",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -717,13 +838,23 @@
         "internalType": "string",
         "name": "cidConteudo",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "referencia",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "substituiId",
+        "type": "uint256"
       }
     ],
     "name": "registrarAfirmacao",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "id",
         "type": "uint256"
       }
     ],
@@ -764,6 +895,25 @@
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "revisorDesde",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

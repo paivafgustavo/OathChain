@@ -7,18 +7,18 @@ const REVISORES = [
   { nome: "Revisor 1", endereco: "0x94B209d982392d0Cf2a0C3c2026D7021937C1C5C" },
   { nome: "Revisor 2", endereco: "0x8F4ecabD57829c2c49AC96FC40101018C4651268" },
   { nome: "Revisor 3", endereco: "0xd5dCBf4BD2EB502Fdb4Ef37eAA33A151E55A0172" },
+  { nome: "Revisor 4", endereco: "0xDAa415B096b11F97a63d2f1aB4dC005aa69E373E" },
+  { nome: "Revisor 5", endereco: "0x9eB56B4CB42a5A66d5A2b3B6881109f97c12c76c" },
 ];
 
 // O endereço do contrato vem do .env (CONTRACT_ADDRESS) ou de deployments/<rede>.json
 function lerEnderecoDoContrato() {
-  if (process.env.CONTRACT_ADDRESS) return process.env.CONTRACT_ADDRESS;
+  // 1) o endereço salvo pelo deploy.js (sempre o mais recente)
   const arquivo = path.join(__dirname, "..", "deployments", hre.network.name + ".json");
-  if (fs.existsSync(arquivo)) {
-    return JSON.parse(fs.readFileSync(arquivo, "utf8")).OathChain;
-  }
-  throw new Error(
-    "Endereço do contrato não encontrado. Coloque CONTRACT_ADDRESS=0x... no arquivo .env"
-  );
+  if (fs.existsSync(arquivo)) return JSON.parse(fs.readFileSync(arquivo, "utf8")).OathChain;
+  // 2) senão, o CONTRACT_ADDRESS do .env
+  if (process.env.CONTRACT_ADDRESS) return process.env.CONTRACT_ADDRESS;
+  throw new Error("Endereço do contrato não encontrado. Rode o deploy.js primeiro.");
 }
 
 async function main() {

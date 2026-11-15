@@ -4,8 +4,10 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title OathChain: livro-razão público de afirmações e promessas verificadas
-/// @notice Versão 2. Um veredito só é gravado se mais de 50% dos revisores
+/// @notice Versão 3. Um veredito só é gravado se mais de 50% dos revisores
 ///         (contados na abertura da verificação) concordarem com ele.
+///         - O veredito é uma "foto datada": pode ser contestado só durante a janela de contestação.
+///         - Se um fato mudar depois, um NOVO registro (afirmação) pode substituir o antigo.
 ///         Guarda só hashes/CIDs; os arquivos ficam no IPFS.
 contract OathChain is Ownable {
     // ---------------------------------------------------------------
@@ -42,6 +44,13 @@ contract OathChain is Ownable {
         uint32 totalRevisores;  // quantos revisores existiam
         uint32 epocaAbertura;   // define quem pode votar nesta rodada
         uint64 fimVotacao;      // até quando se pode votar
+        // Veredito como "foto datada":
+        uint64 finalizadoEm;    // quando o veredito foi gravado
+        uint64 fimContestacao;  // até quando se pode contestar
+        // Afirmações:
+        string referencia;      // período a que a afirmação se refere (ex.: "2025")
+        uint256 substitui;      // id do registro que este corrige (0 = nenhum)
+        uint256 superadaPor;    // id do registro que superou este (0 = nenhum)
     }
 
     struct Fonte {
@@ -61,6 +70,7 @@ contract OathChain is Ownable {
     uint256 public proximoId = 1;
     uint32 public minRevisores = 3;          // mínimo para abrir uma verificação
     uint64 public janelaVotacao = 7 days;    // duração de cada rodada de votação
+    uint64 public janelaContestacao = 7 days; // tempo para contestar depois de finalizar
 
     mapping(uint256 => Registro) private registros;
     mapping(uint256 => Fonte[]) private fontes;
@@ -68,6 +78,8 @@ contract OathChain is Ownable {
     // Revisores
     mapping(address => bool) public ehRevisor;
     mapping(address => uint32) public revisorEpoca; // "época" em que entrou
+    mapping(address => uint64) public revisorDesde; // quando entrou pela primeira vez (timestamp)
+    address[] private _revisores;                   // todos que já foram cadastrados (sem repetir)
     uint32 public revisoresAtivos;
     uint32 public epoca;                             // sobe a cada revisor novo
 
@@ -91,6 +103,8 @@ contract OathChain is Ownable {
     event VotoRegistrado(uint256 indexed id, uint32 rodada, address indexed revisor, Veredito voto, string cidJustificativa);
     event Finalizado(uint256 indexed id, uint32 rodada, Veredito resultado);
     event SemConsenso(uint256 indexed id, uint32 rodada);
+    event Superada(uint256 indexed antigo, uint256 indexed novo);
+    event SuperacaoRevertida(uint256 indexed antigo, uint256 indexed novo);
     event Contestado(uint256 indexed id, address indexed quem, uint32 novaRodada, string cidMotivo);
     event RevisorAlterado(address indexed revisor, bool ativo);
 
@@ -104,6 +118,10 @@ contract OathChain is Ownable {
         if (ativo && !ehRevisor[revisor]) {
             epoca += 1;
             revisorEpoca[revisor] = epoca;
+            if (revisorDesde[revisor] == 0) {
+                revisorDesde[revisor] = uint64(block.timestamp);
+                _revisores.push(revisor);
+            }
             ehRevisor[revisor] = true;
             revisoresAtivos += 1;
             emit RevisorAlterado(revisor, true);
@@ -124,12 +142,32 @@ contract OathChain is Ownable {
         janelaVotacao = novaJanela;
     }
 
+    function definirJanelaContestacao(uint64 novaJanela) external onlyOwner {
+        require(novaJanela > 0, "Janela invalida");
+        janelaContestacao = novaJanela;
+    }
+
     // ---------------------------------------------------------------
     // 5) REGISTRAR
     // ---------------------------------------------------------------
 
-    function registrarAfirmacao(string calldata cidConteudo) external returns (uint256) {
-        return _criar(Tipo.Afirmacao, cidConteudo, bytes32(0), 0);
+    /// @param referencia periodo a que a afirmacao se refere (ex.: "2025"). Obrigatorio.
+    /// @param substituiId id de uma afirmacao FINALIZADA que esta corrige (0 = nenhuma).
+    function registrarAfirmacao(
+        string calldata cidConteudo,
+        string calldata referencia,
+        uint256 substituiId
+    ) external returns (uint256 id) {
+        require(bytes(referencia).length > 0, "Referencia obrigatoria");
+        if (substituiId != 0) {
+            require(_existe(substituiId), "Registro a substituir inexistente");
+            Registro storage antigo = registros[substituiId];
+            require(antigo.tipo == Tipo.Afirmacao, "So afirmacao substitui afirmacao");
+            require(antigo.estado == Estado.Finalizada, "So se substitui registro finalizado");
+        }
+        id = _criar(Tipo.Afirmacao, cidConteudo, bytes32(0), 0);
+        registros[id].referencia = referencia;
+        registros[id].substitui = substituiId;
     }
 
     function registrarPromessa(
@@ -199,6 +237,8 @@ contract OathChain is Ownable {
         require(revisoresAtivos >= minRevisores, "Revisores insuficientes");
         r.estado = Estado.EmVerificacao;
         r.resultado = Veredito.Nenhum;
+        r.finalizadoEm = 0;
+        r.fimContestacao = 0;
         r.totalRevisores = revisoresAtivos;
         r.epocaAbertura = epoca;
         r.fimVotacao = uint64(block.timestamp) + janelaVotacao;
@@ -234,7 +274,10 @@ contract OathChain is Ownable {
         if (vencedor != Veredito.Nenhum) {
             r.resultado = vencedor;
             r.estado = Estado.Finalizada;
+            r.finalizadoEm = uint64(block.timestamp);
+            r.fimContestacao = uint64(block.timestamp) + janelaContestacao;
             emit Finalizado(id, r.rodada, vencedor);
+            if (r.substitui != 0) _aplicarSubstituicao(r);
             return;
         }
 
@@ -247,13 +290,15 @@ contract OathChain is Ownable {
     }
 
     /// @notice Contesta um veredito finalizado: abre uma nova rodada.
-    ///         O autor pode contestar só 1 vez e há no máximo MAX_RODADAS rodadas por registro.
+    ///         O autor pode contestar só 1 vez, há no máximo MAX_RODADAS rodadas por registro
+    ///         e só dá para contestar durante a janela de contestação.
     ///         Rodadas antigas ficam guardadas.
     function contestar(uint256 id, string calldata cidMotivo) external {
         require(_existe(id), "Registro inexistente");
         Registro storage r = registros[id];
         require(r.estado == Estado.Finalizada, "So se pode contestar apos finalizar");
         require(r.rodada < MAX_RODADAS, "Limite de rodadas atingido");
+        require(block.timestamp < r.fimContestacao, "Janela de contestacao encerrada");
 
         if (msg.sender == r.autor) {
             require(!autorJaContestou[id], "Autor ja contestou uma vez");
@@ -281,6 +326,21 @@ contract OathChain is Ownable {
         return _existe(id) && registros[id].estado == Estado.Finalizada;
     }
 
+    /// @notice true quando o veredito não pode mais ser contestado (janela fechou ou limite de rodadas).
+    ///         Atenção: "definitivo" não significa "verdade eterna". Um fato que mudou depois
+    ///         se corrige com um NOVO registro que substitui este.
+    function ehDefinitivo(uint256 id) external view returns (bool) {
+        if (!_existe(id)) return false;
+        Registro storage r = registros[id];
+        if (r.estado != Estado.Finalizada) return false;
+        return block.timestamp >= r.fimContestacao || r.rodada >= MAX_RODADAS;
+    }
+
+    /// @notice Todos os endereços que já foram revisores. Confira `ehRevisor` para saber quem está ativo.
+    function obterRevisores() external view returns (address[] memory) {
+        return _revisores;
+    }
+
     function obterFontes(uint256 id) external view returns (Fonte[] memory) {
         return fontes[id];
     }
@@ -299,6 +359,21 @@ contract OathChain is Ownable {
 
     function _existe(uint256 id) private view returns (bool) {
         return id > 0 && id < proximoId;
+    }
+
+    /// Quando um registro que SUBSTITUI outro é finalizado como Verdadeira, o antigo passa a
+    /// "superado". Se a correção for derrubada em uma contestação, a substituição é desfeita.
+    function _aplicarSubstituicao(Registro storage novo) private {
+        Registro storage antigo = registros[novo.substitui];
+        if (novo.resultado == Veredito.Verdadeira) {
+            if (antigo.superadaPor == 0) {
+                antigo.superadaPor = novo.id;
+                emit Superada(antigo.id, novo.id);
+            }
+        } else if (antigo.superadaPor == novo.id) {
+            antigo.superadaPor = 0;
+            emit SuperacaoRevertida(antigo.id, novo.id);
+        }
     }
 
     /// Revisor ativo E que já era revisor quando a rodada abriu.

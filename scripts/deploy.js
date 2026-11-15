@@ -29,6 +29,14 @@ async function main() {
     )
   );
   console.log("Endereço salvo em:", arquivo);
+
+  // Na Sepolia, também atualiza a interface sozinho (frontend/src/deployment.json)
+  const pastaInterface = path.join(__dirname, "..", "frontend", "src");
+  if (hre.network.name === "sepolia" && fs.existsSync(pastaInterface)) {
+    const arquivoInterface = path.join(pastaInterface, "deployment.json");
+    fs.writeFileSync(arquivoInterface, JSON.stringify({ OathChain: endereco }, null, 2));
+    console.log("Interface atualizada com o novo endereço:", arquivoInterface);
+  }
 }
 
 main().catch((erro) => {
