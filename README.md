@@ -1,6 +1,9 @@
 <div align="center">
 
-# ⛓️ OathChain
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo-fundo-escuro.png">
+  <img src="docs/logo-fundo-claro.png" alt="OathChain" width="420">
+</picture>
 
 ### Um livro-razão público para promessas e afirmações que ninguém consegue apagar
 
@@ -224,6 +227,7 @@ O site é uma aplicação **React (Vite)** que lê o contrato direto da blockcha
 
 | Tela | O que mostra |
 |------|--------------|
+| 🏠 **Início** | Página de apresentação, animada, para quem chega pela primeira vez: o problema, como funciona (registrar, votar, veredito, corrigir), números ao vivo do contrato, perguntas frequentes e atalhos para as outras telas. |
 | 📚 **Estante** | Cada registro é um livro, com a cor da situação (em votação, em contestação, definitivo, superado, sem consenso). Filtros por situação e por ano, panorama e últimas atualizações. |
 | 🔎 **Verificar** | Pesquisa se uma afirmação já foi verificada. Revisores veem o botão para registrar uma nova. |
 | 📄 **Registro** | A página de um registro: veredito, votos, fontes, histórico de correções e as ações (abrir verificação, votar, finalizar, contestar, anexar fonte). |
@@ -233,6 +237,25 @@ O site é uma aplicação **React (Vite)** que lê o contrato direto da blockcha
 | 🗂️ **Assuntos** | Uma sala para cada assunto: Educação, Economia, Saneamento, Saúde, Segurança e Meio Ambiente. |
 
 Por enquanto, o **texto, o assunto, o estado e a cidade** de cada registro ficam guardados juntos, dentro do contrato (um pequeno JSON). Isso é **provisório**: com o IPFS, esse conteúdo passa para um arquivo lá, e o contrato guarda só o link (CID).
+
+---
+
+## 🎨 Identidade visual
+
+O símbolo são **dois anéis entrelaçados**: um azul-marinho e um dourado, que lembram os elos de uma corrente (*chain*) e o "O" e o "C" do nome. O nome vai em minúsculas, em uma fonte sóbria e geométrica.
+
+<p align="center">
+  <img src="docs/apresentacao-claro.png" alt="Logo do OathChain sobre fundo claro" width="48%">
+  <img src="docs/apresentacao-escuro.png" alt="Logo do OathChain sobre fundo escuro" width="48%">
+</p>
+
+| Cor | Código | Uso |
+|-----|:------:|-----|
+| Azul-marinho | `#041737` | Texto e anel da versão para fundo claro; fundo dos ícones |
+| Dourado | `#daa14e` | Anel dourado, destaques e botões principais |
+| Creme | `#f3ead3` | Texto e anel da versão para fundo escuro |
+
+Os arquivos ficam em `docs/` (para o README e apresentações) e em `frontend/public/` (para o site: logo, símbolo, ícones da aba do navegador e imagem de compartilhamento).
 
 ---
 
@@ -332,10 +355,13 @@ OathChain/
 │   └── janelas.js               # ajusta as janelas (útil na demonstração)
 ├── deployments/
 │   └── sepolia.json             # endereço do contrato publicado (público)
+├── docs/                        # logo e imagens de apresentação
 ├── frontend/
+│   ├── index.html               # título, ícones e imagem de compartilhamento
+│   ├── public/                  # logo, símbolo e ícones do site
 │   └── src/
 │       ├── App.jsx, main.jsx    # raiz do site e navegação
-│       ├── paginas/             # Estante, Verificar, Registro, Mapa, Revisores, Linha, Assuntos
+│       ├── paginas/             # Início, Estante, Verificar, Registro, Mapa, Revisores, Linha, Assuntos
 │       ├── useDados.js          # carteira, rede e leitura do contrato
 │       ├── oathchain.js         # leitura e envio de dados do contrato
 │       ├── config.js            # rede, regra de quem registra
@@ -445,6 +471,7 @@ Os **41 testes** simulam também a **passagem do tempo** (promessa vencendo, jan
 - [x] Janela de contestação e veredito definitivo
 - [x] Correção por novo registro ("Superado") e período de referência
 - [x] Site em React ligado ao contrato (estante, mapa, revisores, linha do tempo, assuntos)
+- [x] Identidade visual (logo) e página inicial animada para quem chega pela primeira vez
 - [x] Fluxo completo testado com a MetaMask: registrar, votar, finalizar, contestar, corrigir
 - [ ] Integrar o **IPFS** (texto, metadados e fontes)
 - [ ] Reputação simples dos revisores

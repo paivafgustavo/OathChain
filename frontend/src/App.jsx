@@ -11,12 +11,13 @@ import Mapa from "./paginas/Mapa";
 import Revisores from "./paginas/Revisores";
 import Linha from "./paginas/Linha";
 import { Hub, Sala } from "./paginas/Assuntos";
+import Inicio from "./paginas/Inicio";
 
 // A página atual vem do endereço (#estante, #registro/3, #assunto/Economia...)
 function useRota() {
   const ler = () => {
-    const [rota = "estante", ...resto] = window.location.hash.slice(1).split("/");
-    return { rota, param: decodeURIComponent(resto.join("/")) };
+    const [primeira, ...resto] = window.location.hash.slice(1).split("/");
+    return { rota: primeira || "inicio", param: decodeURIComponent(resto.join("/")) };
   };
   const [r, setR] = useState(ler);
   useEffect(() => {
@@ -31,6 +32,7 @@ function useRota() {
 }
 
 const MENU = [
+  ["inicio", "Início"],
   ["estante", "Estante"],
   ["verificar", "Verificar"],
   ["mapa", "Mapa"],
@@ -43,6 +45,7 @@ export default function App() {
   const d = useDados();
   const { rota, param } = useRota();
   const ativo = { registro: "verificar", registrar: "verificar", assunto: "assuntos" }[rota] || rota;
+  const paginaInicial = !["estante", "verificar", "registrar", "registro", "mapa", "revisores", "linha", "assuntos", "assunto"].includes(rota);
 
   let pagina;
   switch (rota) {
@@ -54,14 +57,15 @@ export default function App() {
     case "linha": pagina = <Linha d={d} />; break;
     case "assuntos": pagina = <Hub d={d} />; break;
     case "assunto": pagina = <Sala d={d} nome={param} />; break;
-    default: pagina = <Estante d={d} />;
+    case "estante": pagina = <Estante d={d} />; break;
+    default: pagina = <Inicio d={d} />;
   }
 
   return (
     <>
       <header>
-          <button className="logo" aria-label="OathChain, ir para a estante" onClick={() => { window.location.hash = "estante"; }}>
-            📖 OathChain
+          <button className="logo" aria-label="OathChain, página inicial" onClick={() => { window.location.hash = "inicio"; }}>
+            <img src="/logo-fundo-escuro.png" alt="OathChain" />
           </button>
           <nav aria-label="Principal">
             {MENU.map(([k, nome]) => (
@@ -79,7 +83,8 @@ export default function App() {
           )}
       </header>
 
-      <main>
+      <main className={paginaInicial ? "cheia" : undefined}>
+        <div className="avisos">
         {!d.enderecoValido && (
           <Aviso>
             Falta o endereço do contrato. Rode o <code>deploy.js</code> na Sepolia (ele grava o endereço em
@@ -93,6 +98,7 @@ export default function App() {
           </Aviso>
         )}
         {d.erro && <Aviso tipo="erro">{d.erro}</Aviso>}
+        </div>
         <section className="pg on">{pagina}</section>
         <footer className="mut" style={{ marginTop: 40, fontSize: 13, textAlign: "center" }}>
           Protótipo acadêmico em rede de testes. Os dados vêm do contrato; nada aqui vale como decisão oficial.
