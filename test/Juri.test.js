@@ -27,6 +27,7 @@ describe("OathChain v5: júri sorteado, voto secreto e candidatura", function ()
     const livro = await ethers.deployContract("OathChain");
     const gestao = await ethers.deployContract("GestaoRevisores", [await livro.getAddress()]);
     await livro.definirGestao(await gestao.getAddress());
+    await livro.definirJuri(5, 2, true); // estes testes cobrem o voto secreto; o voto aberto tem seu próprio bloco abaixo
     for (const r of revs) await livro.definirRevisor(r.address, true);
     await gestao.definirParametros(ethers.parseEther("0.01"), 2, 1, 1 * DIA, 20, 7 * DIA, 100);
     return { livro, gestao, dono, autor, estranho, revs, aprs, sig };
@@ -55,6 +56,65 @@ describe("OathChain v5: júri sorteado, voto secreto e candidatura", function ()
   async function revelar(b, quem, voto) {
     await b.livro.connect(quem).revelarVoto(b.id, voto, SAL, JUST, LINK);
   }
+
+  describe("voto aberto (selo e justificativa juntos)", function () {
+    async function aberta() {
+      const b = await comAprendizes();
+      await b.livro.definirJuri(5, 2, false);
+      return sorteada(b);
+    }
+
+    it("o padrão do contrato é voto aberto", async function () {
+      const livro = await ethers.deployContract("OathChain");
+      expect(await livro.votoSecreto()).to.equal(false);
+    });
+
+    it("vota e justifica numa única transação, já valendo na hora", async function () {
+      const s = await aberta();
+      await expect(s.livro.connect(s.jurados[0]).votarComJustificativa(s.id, V.Verdadeira, JUST, LINK))
+        .to.emit(s.livro, "VotoRevelado");
+      expect(await s.livro.obterVoto(s.id, 1, s.jurados[0].address)).to.equal(V.Verdadeira);
+      expect(await s.livro.obterContagem(s.id, 1, V.Verdadeira)).to.equal(1);
+    });
+
+    it("exige justificativa de 40+ caracteres e link http", async function () {
+      const s = await aberta();
+      const j = s.jurados[0];
+      await expect(s.livro.connect(j).votarComJustificativa(s.id, V.Falsa, "curta", LINK)).to.be.revertedWith("Justificativa curta demais");
+      await expect(s.livro.connect(j).votarComJustificativa(s.id, V.Falsa, JUST, "sem-link")).to.be.revertedWith("Link de fonte invalido");
+    });
+
+    it("só jurado sorteado vota, uma vez só, e o autor não", async function () {
+      const s = await aberta();
+      const fora = s.revs.find((r) => !s.jurados.some((j) => j.address === r.address));
+      await expect(s.livro.connect(fora).votarComJustificativa(s.id, V.Falsa, JUST, LINK)).to.be.revertedWith("Apenas revisores");
+      await s.livro.connect(s.jurados[0]).votarComJustificativa(s.id, V.Falsa, JUST, LINK);
+      await expect(s.livro.connect(s.jurados[0]).votarComJustificativa(s.id, V.Falsa, JUST, LINK)).to.be.revertedWith("Ja votou nesta rodada");
+    });
+
+    it("votar() sem justificativa não vale mais no modo júri", async function () {
+      const s = await aberta();
+      await expect(s.livro.connect(s.jurados[0]).votar(s.id, V.Falsa, "ipfs://j")).to.be.revertedWith("Use votarComJustificativa");
+    });
+
+    it("selar/revelar ficam indisponíveis, e aprendiz observa sem contar", async function () {
+      const s = await aberta();
+      await expect(s.livro.connect(s.jurados[0]).comprometerVoto(s.id, ethers.id("x"))).to.be.revertedWith("Voto secreto indisponivel");
+      await s.livro.connect(s.obs[0]).votarComJustificativa(s.id, V.Falsa, JUST, LINK);
+      expect(await s.livro.obterContagem(s.id, 1, V.Falsa)).to.equal(0);
+    });
+
+    it("maioria 3 de 5 finaliza assim que todos votam, sem esperar a janela", async function () {
+      const s = await aberta();
+      const todos = [...s.jurados, ...s.obs];
+      const vs = [V.Falsa, V.Falsa, V.Falsa, V.Verdadeira, V.Verdadeira];
+      for (let i = 0; i < 5; i++) await s.livro.connect(s.jurados[i]).votarComJustificativa(s.id, vs[i], JUST, LINK);
+      for (const o of s.obs) await s.livro.connect(o).votarComJustificativa(s.id, V.Falsa, JUST, LINK);
+      await s.livro.finalizar(s.id);
+      expect((await s.livro.obterRegistro(s.id)).estado).to.equal(E.Finalizada);
+      expect((await s.livro.obterRegistro(s.id)).resultado).to.equal(V.Falsa);
+    });
+  });
 
   describe("sorteio", function () {
     it("só sorteia depois do bloco futuro e só uma vez", async function () {

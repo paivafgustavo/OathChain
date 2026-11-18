@@ -127,7 +127,7 @@ contract OathChain is Ownable {
     // Júri sorteado e voto secreto
     uint32 public tamanhoJuri = 5;           // 0 = todos os revisores votam (modo antigo)
     uint32 public aprendizesPorJuri = 2;
-    bool public votoSecreto = true;
+    bool public votoSecreto = false;     // padrão: voto aberto, justificativa junto com o voto
     address public gestao;                   // contrato GestaoRevisores (candidatura + prova)
     address[] private _aprendizes;           // aprendizes ativos (observadores)
     mapping(address => uint256) private _idxAprendiz; // índice + 1
@@ -587,11 +587,12 @@ contract OathChain is Ownable {
         }
     }
 
-    function votar(uint256 id, Veredito voto, string calldata cidJustificativa) external {
+    /// Checagens comuns a qualquer voto direto (sem selo).
+    function _checarVotoDireto(uint256 id, Veredito voto) private view returns (Registro storage r, Juri storage j) {
         require(_existe(id), "Registro inexistente");
-        Registro storage r = registros[id];
+        r = registros[id];
         require(r.estado == Estado.EmVerificacao, "Nao esta em verificacao");
-        Juri storage j = juri[id][r.rodada];
+        j = juri[id][r.rodada];
         require(!j.secreto, "Use o voto secreto");
         require(r.fimVotacao != 0, "Sorteio pendente");
         require(block.timestamp < r.fimVotacao, "Janela de votacao encerrada");
@@ -599,15 +600,30 @@ contract OathChain is Ownable {
         require(msg.sender != r.autor, "Autor nao pode votar");
         require(_vereditoValido(r.tipo, voto), "Veredito invalido para o tipo");
         require(votos[id][r.rodada][msg.sender] == Veredito.Nenhum, "Ja votou nesta rodada");
+    }
 
-        if (j.tamanho > 0) {
-            _contarVoto(id, r, voto, cidJustificativa, "");
-        } else {
-            votos[id][r.rodada][msg.sender] = voto;
-            contagem[id][r.rodada][voto] += 1;
-            totalVotos[id][r.rodada] += 1;
-            emit VotoRegistrado(id, r.rodada, msg.sender, voto, cidJustificativa);
-        }
+    /// @notice Modo antigo (sem júri): todos os revisores votam, justificativa por CID.
+    function votar(uint256 id, Veredito voto, string calldata cidJustificativa) external {
+        (Registro storage r, Juri storage j) = _checarVotoDireto(id, voto);
+        require(j.tamanho == 0, "Use votarComJustificativa");
+        votos[id][r.rodada][msg.sender] = voto;
+        contagem[id][r.rodada][voto] += 1;
+        totalVotos[id][r.rodada] += 1;
+        emit VotoRegistrado(id, r.rodada, msg.sender, voto, cidJustificativa);
+    }
+
+    /// @notice Modo júri com voto ABERTO: voto, justificativa (>= 40 caracteres) e link de fonte
+    ///         vão juntos, numa única transação, durante toda a janela de votação.
+    function votarComJustificativa(
+        uint256 id,
+        Veredito voto,
+        string calldata justificativa,
+        string calldata linkFonte
+    ) external {
+        (Registro storage r, Juri storage j) = _checarVotoDireto(id, voto);
+        require(j.tamanho > 0, "Use votar");
+        _exigirFundamentacao(justificativa, linkFonte);
+        _contarVoto(id, r, voto, justificativa, linkFonte);
     }
 
     /// @notice Regra: o veredito vence quando tem MAIS DE 50% dos revisores da rodada.

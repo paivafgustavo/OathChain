@@ -193,7 +193,7 @@ export function PainelJuri({ r, d }) {
 
   // Votos já revelados (leitura dos eventos do contrato)
   useEffect(() => {
-    if (!j?.sorteado || !j.secreto) return undefined;
+    if (!j?.sorteado) return undefined;
     let vivo = true;
     d.lerContrato()
       .then((c) => c.queryFilter(c.filters.VotoRevelado(r.id), BLOCO_INICIAL || 0))
@@ -204,7 +204,7 @@ export function PainelJuri({ r, d }) {
 
   if (!j || j.tamanho === 0) return null;
 
-  const fase = !j.sorteado ? "sorteio" : agora < j.fimCompromisso ? "selar" : agora < r.fimVotacao ? "revelar" : "encerrada";
+  const fase = !j.sorteado ? "sorteio" : !j.secreto ? (agora < r.fimVotacao ? "votar" : "encerrada") : agora < j.fimCompromisso ? "selar" : agora < r.fimVotacao ? "revelar" : "encerrada";
   const souJuradoOuAprendiz = r.meuPapel !== 0;
   const jaSelou = !!r.meuSelo;
   const jaRevelou = r.meuVoto > 0;
@@ -235,6 +235,16 @@ export function PainelJuri({ r, d }) {
       setOk("Voto selado! Ninguém vê o que você escolheu. Volte na etapa de revelar.");
     });
 
+  // Voto aberto: veredito, justificativa e link vão juntos, numa única transação.
+  const votarAberto = () =>
+    agir(async (c) => {
+      if (!veredito) throw { shortMessage: "Escolha um veredito." };
+      if (just.trim().length < 40) throw { shortMessage: "A justificativa precisa ter pelo menos 40 caracteres." };
+      if (!/^https?:\/\/.{6,}/.test(link.trim())) throw { shortMessage: "Informe o link (http...) da fonte que sustenta o seu voto." };
+      await executar(c, "votarComJustificativa", [r.id, veredito, just.trim(), link.trim()]);
+      setOk(`Voto registrado: ${VEREDITOS[veredito]}.`);
+    });
+
   const revelar = () =>
     agir(async (c) => {
       if (just.trim().length < 40) throw { shortMessage: "A justificativa precisa ter pelo menos 40 caracteres." };
@@ -249,12 +259,21 @@ export function PainelJuri({ r, d }) {
 
   return (
     <div className="card painel">
-      <h3>🎲 Júri sorteado {j.secreto && "· voto secreto"}</h3>
+      <h3>🎲 Júri sorteado · {j.secreto ? "voto secreto" : "voto aberto com justificativa"}</h3>
       <ol className="fases">
         <li className={fase === "sorteio" ? "on" : "feito"}>1. Sorteio</li>
-        <li className={fase === "selar" ? "on" : fase === "sorteio" ? "" : "feito"}>2. Selar voto</li>
-        <li className={fase === "revelar" ? "on" : fase === "encerrada" ? "feito" : ""}>3. Revelar</li>
-        <li className={fase === "encerrada" ? "on" : ""}>4. Resultado</li>
+        {j.secreto ? (
+          <>
+            <li className={fase === "selar" ? "on" : fase === "sorteio" ? "" : "feito"}>2. Selar voto</li>
+            <li className={fase === "revelar" ? "on" : fase === "encerrada" ? "feito" : ""}>3. Revelar</li>
+            <li className={fase === "encerrada" ? "on" : ""}>4. Resultado</li>
+          </>
+        ) : (
+          <>
+            <li className={fase === "votar" ? "on" : fase === "sorteio" ? "" : "feito"}>2. Votar e justificar</li>
+            <li className={fase === "encerrada" ? "on" : ""}>3. Resultado</li>
+          </>
+        )}
       </ol>
 
       {fase === "sorteio" && (
@@ -274,12 +293,26 @@ export function PainelJuri({ r, d }) {
             <b>Jurados sorteados:</b> {j.jurados.map((a) => abreviar(a)).join(", ")}
             {j.observadores.length > 0 && <><br /><b>Aprendizes observando:</b> {j.observadores.map((a) => abreviar(a)).join(", ")}</>}
           </p>
+          {fase === "votar" && <p style={{ margin: "0 0 6px" }}>A votação termina em {formatarData(r.fimVotacao)} (faltam {restante(r.fimVotacao, agora)}). Sorteado que não votar leva uma falta.</p>}
           {fase === "selar" && <p style={{ margin: "0 0 6px" }}>Etapa de selar termina em {formatarData(j.fimCompromisso)} (faltam {restante(j.fimCompromisso, agora)}).</p>}
           {fase === "revelar" && <p style={{ margin: "0 0 6px" }}>Etapa de revelar termina em {formatarData(r.fimVotacao)} (faltam {restante(r.fimVotacao, agora)}). Sorteado que não revelar leva uma falta.</p>}
-          <p className="nota-v" style={{ color: "inherit" }}>Revelaram até agora: {r.reveladosPart} de {j.jurados.length + j.observadores.length}.</p>
+          <p className="nota-v" style={{ color: "inherit" }}>{j.secreto ? "Revelaram" : "Votaram"} até agora: {r.reveladosPart} de {j.jurados.length + j.observadores.length}.</p>
 
           {souJuradoOuAprendiz && <p style={{ margin: "6px 0" }}>Você foi sorteado como <b>{rotuloPapel}</b>.</p>}
 
+          {!j.secreto && souJuradoOuAprendiz && fase === "votar" && !jaRevelou && (
+            <div>
+              <div className="opcoes">
+                {vs.map((v) => (
+                  <label key={v}><input type="radio" name="vd" checked={veredito === v} onChange={() => setVeredito(v)} /> {VEREDITOS[v]}</label>
+                ))}
+              </div>
+              <textarea rows={3} placeholder="Justificativa (mínimo de 40 caracteres): o que você encontrou nas fontes?" value={just} onChange={(e) => setJust(e.target.value)} />
+              <input type="text" placeholder="Link da fonte que sustenta o seu voto (https://...)" value={link} onChange={(e) => setLink(e.target.value)} />
+              <div className="acts2"><button className="main-btn peq" disabled={ocupado || !veredito} onClick={votarAberto}>Votar</button></div>
+              <small>Voto e justificativa vão juntos, numa só transação. Os votos já dados aparecem abaixo: decida pelas fontes, não pela maioria. Discordar não custa nada; só não votar custa.</small>
+            </div>
+          )}
           {j.secreto && souJuradoOuAprendiz && fase === "selar" && !jaSelou && (
             <div>
               <div className="opcoes">
@@ -308,7 +341,7 @@ export function PainelJuri({ r, d }) {
 
           {revelados.length > 0 && (
             <details open>
-              <summary>Votos revelados e fundamentação ({revelados.length})</summary>
+              <summary>{j.secreto ? "Votos revelados" : "Votos"} e fundamentação ({revelados.length})</summary>
               <ul className="agentes">
                 {revelados.map((v, i) => (
                   <li key={i}>

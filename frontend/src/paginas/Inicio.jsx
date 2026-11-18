@@ -151,7 +151,7 @@ const ETAPAS = [
   {
     n: "3",
     titulo: "Humanos recorrem",
-    texto: "Se a IA tiver dúvida, ou se alguém discordar dentro da janela de recurso, um júri sorteado decide por voto secreto, com fonte e justificativa.",
+    texto: "Se a IA tiver dúvida, ou se alguém discordar dentro da janela de recurso, um júri sorteado decide, com voto, justificativa e fonte juntos.",
     icone: "🎲",
   },
   {
@@ -171,8 +171,8 @@ const AGENTES = [
 
 const JURI = [
   ["🎲", "Sorteio sem escolha", "Os jurados saem de um sorteio com o hash de um bloco futuro. Nem o autor nem os criadores do site escolhem quem julga."],
-  ["🔐", "Voto selado", "Na primeira metade do prazo cada jurado guarda só o código do seu voto. Ninguém vê o voto dos outros, então não dá para copiar a maioria."],
-  ["📎", "Voto revelado e fundamentado", "Na segunda metade o voto é revelado, com justificativa e link da fonte. Quem foi sorteado e não participa leva uma falta."],
+  ["🗳️", "Voto e justificativa juntos", "Cada jurado vota em uma única etapa, durante todo o prazo, e já envia a justificativa e o link da fonte na mesma transação."],
+  ["📎", "Tudo à vista", "Os votos aparecem assim que são dados, com a fundamentação de cada um. Discordar da maioria não custa nada; quem foi sorteado e não vota leva uma falta."],
 ];
 
 const REVISOR = [
@@ -183,9 +183,9 @@ const REVISOR = [
 ];
 
 const FAQ = [
-  ["Quem decide o que é verdade?", "Primeiro, quatro agentes de IA analisam as fontes e dão um veredito provisório. Se houver dúvida ou recurso, decide um júri de revisores sorteado, por voto secreto e com mais de 50% dos jurados. Ninguém decide sozinho, e todos os votos e relatórios ficam abertos."],
+  ["Quem decide o que é verdade?", "Primeiro, quatro agentes de IA analisam as fontes e dão um veredito provisório. Se houver dúvida ou recurso, decide um júri de revisores sorteado, com mais de 50% dos jurados. Ninguém decide sozinho, e todos os votos e relatórios ficam abertos."],
   ["A IA pode errar?", "Pode, e por isso ela nunca fecha um veredito sozinha: o resultado é provisório, o relatório é público (com hash na blockchain) e há uma janela para recorrer a humanos. A IA também só verifica fatos checáveis; opiniões tendem a ficar como inconclusivas."],
-  ["Por que o voto do júri é secreto?", "Para ninguém copiar a maioria. Primeiro cada jurado sela o voto; só depois todos revelam, com justificativa e link da fonte. Assim cada um é incentivado a pesquisar e chegar ao próprio veredito."],
+  ["Como o júri vota?", "Cada jurado escolhe o veredito e envia, na mesma hora, a justificativa (mínimo de 40 caracteres) e o link da fonte. Tudo fica público. Como não é obrigatório seguir a maioria, o que conta é a fonte que cada um apresenta."],
   ["Como me torno revisor?", "Pela página “Seja revisor”: você se candida com um depósito, vira aprendiz, observa júris reais e é promovido automaticamente quando participa com fundamentação. Discordar da maioria nunca é punido; só faltar quando for sorteado."],
   ["O que acontece se o fato mudar depois?", "O veredito é uma foto datada, e não uma verdade eterna. Se o fato mudar, alguém registra uma correção. Se ela for aprovada, o registro antigo ganha a marca “Superado” e continua visível, com o histórico completo."],
   ["Preciso de carteira para usar o site?", "Para consultar, não. Qualquer pessoa pesquisa, navega pela estante, pelo mapa e pela linha do tempo. A carteira (MetaMask) só é necessária para registrar, votar e se candidatar."],

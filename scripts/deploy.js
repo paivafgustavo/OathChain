@@ -48,10 +48,10 @@ async function main() {
 
   // MODO DEMONSTRAÇÃO (DEMO=1): tudo rápido para mostrar ao vivo. Sem DEMO, valem os padrões do contrato.
   if (process.env.DEMO === "1") {
-    await tentar(async () => (await oathChain.definirJanelaVotacao(1200)).wait());     // 20 min (selar 10 + revelar 10)
+    await tentar(async () => (await oathChain.definirJanelaVotacao(1200)).wait());     // 20 min para votar (voto + justificativa juntos)
     await tentar(async () => (await oathChain.definirJanelaContestacao(300)).wait());  // 5 min
     await tentar(async () => (await oathChain.definirJanelaRevisaoIA(300)).wait());    // 5 min para recorrer da IA
-    await tentar(async () => (await oathChain.definirJuri(3, 2, true)).wait());
+    await tentar(async () => (await oathChain.definirJuri(3, 2, false)).wait());
     await tentar(async () => (await gestao.definirParametros(hre.ethers.parseEther("0.001"), 2, 2, 600, 20, 600, 50)).wait());
     console.log("Modo demonstração ligado (janelas curtas, depósito 0.001 ETH, prova de 2 votos).");
   }
