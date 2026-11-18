@@ -79,13 +79,14 @@ function Contador({ valor, sufixo = "" }) {
 
 // Estante animada do topo: livros que "caem" nas prateleiras e um recebe o selo
 const LIVROS = [
-  { h: 118, c: "--v", t: "Esgoto 2026" },
-  { h: 150, c: "--c", t: "Tarifa 2025" },
-  { h: 132, c: "--x", t: "Esgoto 2024" },
-  { h: 160, c: "--f", t: "Fila SUS" },
-  { h: 124, c: "--v", t: "Escolas" },
-  { h: 146, c: "--s", t: "Inflação" },
-  { h: 136, c: "--w", t: "Em votação" },
+  { h: 118, c: "#2da36f", t: "Esgoto 2026" },
+  { h: 150, c: "#e0a92a", t: "Tarifa 2025" },
+  { h: 132, c: "#6d56a3", t: "Esgoto 2024" },
+  { h: 160, c: "#e5484d", t: "Fila SUS" },
+  { h: 124, c: "#2da36f", t: "Escolas" },
+  { h: 146, c: "#7a7c84", t: "Inflação" },
+  { h: 136, c: "#4c8dd6", t: "Em votação" },
+  { h: 128, c: "#14b8a6", t: "Provisório IA" },
 ];
 
 function EstanteAnimada() {
@@ -97,16 +98,16 @@ function EstanteAnimada() {
           <span
             key={i}
             className="lp-livro"
-            style={{ "--h": l.h + "px", "--c": `var(${l.c})`, "--i": i }}
+            style={{ "--h": l.h + "px", "--c": l.c, "--i": i }}
           >
             <b>{l.t}</b>
-            {l.c === "--x" && <i className="lp-selo" />}
+            {l.c === "#6d56a3" && <i className="lp-selo" />}
           </span>
         ))}
       </div>
       <div className="lp-tabua" />
       <div className="lp-etiqueta">
-        <span className="pt" /> Verificado · 3 de 5 revisores
+        <span className="pt" /> IA 82% · júri sorteado: 3 de 5
       </div>
     </div>
   );
@@ -118,7 +119,7 @@ function BarraDemo() {
   return (
     <div ref={ref} className={"lp-demo" + (ok ? " on" : "")}>
       <div className="lp-demo-cab">
-        <span>5 revisores votam</span>
+        <span>5 jurados sorteados votam</span>
         <b>3 votos “Verdadeira”</b>
       </div>
       <div className="lp-demo-barra">
@@ -138,20 +139,20 @@ const ETAPAS = [
   {
     n: "1",
     titulo: "Registrar",
-    texto: "Um revisor registra uma afirmação (com o período a que ela se refere) ou uma promessa (com prazo e critérios claros) e anexa as fontes.",
+    texto: "Alguém registra uma afirmação (com o período a que ela se refere) ou uma promessa (com prazo e critérios claros) e anexa as fontes.",
     icone: "✍️",
   },
   {
     n: "2",
-    titulo: "Votar",
-    texto: "Os revisores analisam as provas e votam. Cada voto fica gravado, com justificativa. O autor não vota no próprio registro.",
-    icone: "🗳️",
+    titulo: "A IA verifica",
+    texto: "Quatro agentes de IA pesquisam as fontes e dão um veredito provisório, com a confiança e um relatório que qualquer pessoa pode conferir.",
+    icone: "🤖",
   },
   {
     n: "3",
-    titulo: "Veredito",
-    texto: "O veredito só vale com mais de 50% dos revisores. Sem maioria, nada é gravado: melhor admitir que não há consenso do que fingir certeza.",
-    icone: "⚖️",
+    titulo: "Humanos recorrem",
+    texto: "Se a IA tiver dúvida, ou se alguém discordar dentro da janela de recurso, um júri sorteado decide por voto secreto, com fonte e justificativa.",
+    icone: "🎲",
   },
   {
     n: "4",
@@ -161,12 +162,35 @@ const ETAPAS = [
   },
 ];
 
+const AGENTES = [
+  ["🔎", "Pesquisador", "Cria as buscas e reúne evidências em fontes abertas: agências de checagem, Wikipédia e páginas da web."],
+  ["📏", "Avaliador de fontes", "Dá uma nota de credibilidade a cada fonte. Dado oficial e checagem profissional pesam mais que blog."],
+  ["🧠", "Analista especialista", "Analisa a afirmação conforme o assunto (economia, saúde, meio ambiente...) usando apenas as fontes encontradas."],
+  ["⚖️", "Contraditor", "Tenta derrubar a conclusão do analista. Se ela resistir, a confiança sobe; se não, o veredito vira inconclusivo."],
+];
+
+const JURI = [
+  ["🎲", "Sorteio sem escolha", "Os jurados saem de um sorteio com o hash de um bloco futuro. Nem o autor nem os criadores do site escolhem quem julga."],
+  ["🔐", "Voto selado", "Na primeira metade do prazo cada jurado guarda só o código do seu voto. Ninguém vê o voto dos outros, então não dá para copiar a maioria."],
+  ["📎", "Voto revelado e fundamentado", "Na segunda metade o voto é revelado, com justificativa e link da fonte. Quem foi sorteado e não participa leva uma falta."],
+];
+
+const REVISOR = [
+  ["📝", "1. Candidatura", "Qualquer pessoa se candida com um depósito de garantia. Não existe porteiro: ninguém precisa pedir permissão."],
+  ["🎓", "2. Período de prova", "Como aprendiz, você observa júris reais e vota, sem que o seu voto conte no resultado."],
+  ["🚀", "3. Promoção automática", "Com votos fundamentados e sem faltas, o contrato promove você a revisor sozinho. O crescimento é gradual, para barrar contas falsas."],
+  ["🧭", "4. Sem “maria vai com as outras”", "Discordar da maioria não custa nada. Só a falta de participação é punida: o que vale é pesquisar e chegar ao seu veredito."],
+];
+
 const FAQ = [
-  ["Quem decide o que é verdade?", "Um grupo de revisores cadastrados, olhando provas públicas. Nenhum revisor decide sozinho: o veredito precisa de mais de 50% deles, todos os votos ficam abertos e qualquer resultado pode ser contestado dentro de uma janela de tempo."],
+  ["Quem decide o que é verdade?", "Primeiro, quatro agentes de IA analisam as fontes e dão um veredito provisório. Se houver dúvida ou recurso, decide um júri de revisores sorteado, por voto secreto e com mais de 50% dos jurados. Ninguém decide sozinho, e todos os votos e relatórios ficam abertos."],
+  ["A IA pode errar?", "Pode, e por isso ela nunca fecha um veredito sozinha: o resultado é provisório, o relatório é público (com hash na blockchain) e há uma janela para recorrer a humanos. A IA também só verifica fatos checáveis; opiniões tendem a ficar como inconclusivas."],
+  ["Por que o voto do júri é secreto?", "Para ninguém copiar a maioria. Primeiro cada jurado sela o voto; só depois todos revelam, com justificativa e link da fonte. Assim cada um é incentivado a pesquisar e chegar ao próprio veredito."],
+  ["Como me torno revisor?", "Pela página “Seja revisor”: você se candida com um depósito, vira aprendiz, observa júris reais e é promovido automaticamente quando participa com fundamentação. Discordar da maioria nunca é punido; só faltar quando for sorteado."],
   ["O que acontece se o fato mudar depois?", "O veredito é uma foto datada, e não uma verdade eterna. Se o fato mudar, alguém registra uma correção. Se ela for aprovada, o registro antigo ganha a marca “Superado” e continua visível, com o histórico completo."],
-  ["Preciso de carteira para usar o site?", "Para consultar, não. Qualquer pessoa pesquisa, navega pela estante, pelo mapa e pela linha do tempo. A carteira (MetaMask) só é necessária para registrar e votar."],
-  ["Isso é de graça?", "Consultar é livre. Registrar e votar gravam dados na blockchain e usam uma pequena taxa de rede. Neste protótipo, a rede é de testes e a taxa é paga com ETH de teste, que não vale dinheiro."],
-  ["Posso confiar no que está aqui?", "Este é um protótipo acadêmico com exemplos fictícios. O que a blockchain garante é que o registro não foi alterado depois, e não que o conteúdo seja verdadeiro: quem confere as provas são os revisores."],
+  ["Preciso de carteira para usar o site?", "Para consultar, não. Qualquer pessoa pesquisa, navega pela estante, pelo mapa e pela linha do tempo. A carteira (MetaMask) só é necessária para registrar, votar e se candidatar."],
+  ["Isso é de graça?", "Consultar é livre. Registrar e votar gravam dados na blockchain e usam uma pequena taxa de rede. Neste protótipo, a rede é de testes e a taxa (e o depósito) são pagos com ETH de teste, que não vale dinheiro."],
+  ["Posso confiar no que está aqui?", "Este é um protótipo acadêmico com exemplos fictícios. O que a blockchain garante é que o registro não foi alterado depois, e não que o conteúdo seja verdadeiro: quem confere as provas são a IA e os jurados."],
 ];
 
 const PUBLICO = [
@@ -184,6 +208,7 @@ export default function Inicio({ d }) {
   const total = d.registros.length;
   const defs = d.registros.filter((r) => definitivo(r, d.agora)).length;
   const revisores = d.resumo?.revisoresAtivos ?? 0;
+  const pelaIA = d.registros.filter((r) => r.ia).length;
   const [aberta, setAberta] = useState(0);
 
   const rolarPara = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -201,8 +226,9 @@ export default function Inicio({ d }) {
             Toda afirmação verificada <span className="lp-dourado">fica guardada para sempre.</span>
           </h1>
           <p className="lp-sub">
-            Notícias, dados e promessas se perdem, são editados ou somem. No OathChain, cada verificação vira um
-            registro com data, autor e histórico que ninguém apaga nem altera.
+            Notícias, dados e promessas se perdem, são editados ou somem. No OathChain, quatro agentes de IA verificam
+            primeiro e um júri humano sorteado decide os recursos. Cada verificação vira um registro com data, autor,
+            relatório e histórico que ninguém apaga nem altera.
           </p>
           <div className="lp-cta">
             <Ir className="main-btn" para="estante">Explorar a estante</Ir>
@@ -260,20 +286,98 @@ export default function Inicio({ d }) {
         <Revelar className="lp-demo-bloco">
           <h3>A regra da maioria, na prática</h3>
           <p className="mut">
-            O veredito vence quando passa de 50% dos revisores da rodada. Com 5 revisores, são necessários 3 votos
-            iguais.
+            Quando a IA tem dúvida (ou alguém recorre), decide um júri sorteado: o veredito vence com mais de 50% dos
+            jurados. Com 5 jurados, são necessários 3 votos iguais.
           </p>
           <BarraDemo />
         </Revelar>
       </section>
 
-      {/* ---------- Números ao vivo ---------- */}
+      {/* ---------- Os 4 agentes de IA ---------- */}
       <section className="lp-sec-bloco">
+        <Revelar><p className="lp-etq">Verificação automática</p></Revelar>
+        <Revelar atraso={60}><h2>Quatro agentes de IA, um debate.</h2></Revelar>
+        <Revelar><p className="mut lp-intro">
+          A IA responde em minutos, mas nunca decide sozinha: o veredito dela é <b>provisório</b> e fica aberto a recurso
+          humano por alguns dias. Tudo o que ela fez fica num relatório público.
+        </p></Revelar>
+        <div className="lp-publico">
+          {AGENTES.map(([ic, t, tx], i) => (
+            <Revelar key={t} atraso={i * 90} className="lp-cartao">
+              <span className="lp-ic">{ic}</span>
+              <h3>{t}</h3>
+              <p>{tx}</p>
+            </Revelar>
+          ))}
+        </div>
+        <div className="lp-pares">
+          <Revelar className="lp-par">
+            <h3>📋 O relator não é uma IA</h3>
+            <p>
+              A decisão final sai de regras fixas e abertas: vence o veredito com 2 de 3 votos dos agentes, a confiança é a
+              média de quem concordou e há tetos (poucas fontes, fontes fracas ou contraditor discordando reduzem a nota).
+              Com confiança abaixo de 70%, a decisão passa direto para o júri humano.
+            </p>
+          </Revelar>
+          <Revelar atraso={100} className="lp-par">
+            <h3>🧾 Relatório que não dá para adulterar</h3>
+            <p>
+              O relatório completo (buscas, fontes, notas e o voto de cada agente) é um arquivo cujo <b>hash fica gravado
+              na blockchain</b>. O site baixa o arquivo e confere sozinho: se uma vírgula mudar, o hash não bate.
+            </p>
+          </Revelar>
+        </div>
+        <Revelar>
+          <p className="lp-aviso">
+            <b>A IA pode errar.</b> Por isso o veredito é provisório, o relatório é público e qualquer revisor pode
+            recorrer. Ela verifica fatos checáveis; opiniões e previsões tendem a sair como “inconclusivas”.
+          </p>
+        </Revelar>
+      </section>
+
+      {/* ---------- Júri sorteado ---------- */}
+      <section className="lp-sec-bloco lp-escuro">
+        <Revelar><p className="lp-etq">Recurso humano</p></Revelar>
+        <Revelar atraso={60}><h2>Júri sorteado e voto secreto.</h2></Revelar>
+        <div className="lp-trio">
+          {JURI.map(([ic, t, tx], i) => (
+            <Revelar key={t} atraso={i * 110} className="lp-cartao">
+              <span className="lp-ic">{ic}</span>
+              <h3>{t}</h3>
+              <p>{tx}</p>
+            </Revelar>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- Seja revisor ---------- */}
+      <section className="lp-sec-bloco">
+        <Revelar><p className="lp-etq">Revisores sem porteiro</p></Revelar>
+        <Revelar atraso={60}><h2>Quer ajudar a verificar? Candidate-se.</h2></Revelar>
+        <div className="lp-publico">
+          {REVISOR.map(([ic, t, tx], i) => (
+            <Revelar key={t} atraso={i * 90} className="lp-cartao">
+              <span className="lp-ic">{ic}</span>
+              <h3>{t}</h3>
+              <p>{tx}</p>
+            </Revelar>
+          ))}
+        </div>
+        <Revelar>
+          <div className="lp-cta" style={{ marginTop: 26, animation: "none" }}>
+            <Ir className="main-btn" para="revisor">Quero ser revisor</Ir>
+          </div>
+        </Revelar>
+      </section>
+
+      {/* ---------- Números ao vivo ---------- */}
+      <section className="lp-sec-bloco lp-escuro">
         <Revelar><p className="lp-etq">Ao vivo, direto do contrato</p></Revelar>
         <div className="lp-numeros">
           <Revelar className="lp-numero"><strong><Contador valor={total} /></strong><span>registros guardados</span></Revelar>
           <Revelar atraso={100} className="lp-numero"><strong><Contador valor={revisores} /></strong><span>revisores ativos</span></Revelar>
-          <Revelar atraso={200} className="lp-numero"><strong><Contador valor={defs} /></strong><span>vereditos definitivos</span></Revelar>
+          <Revelar atraso={200} className="lp-numero"><strong><Contador valor={pelaIA} /></strong><span>verificadas pela IA</span></Revelar>
+          <Revelar atraso={300} className="lp-numero"><strong><Contador valor={defs} /></strong><span>vereditos definitivos</span></Revelar>
         </div>
         <Revelar><p className="mut lp-centro">
           {d.resumo ? "Estes números são lidos da blockchain neste momento." : "Os números aparecem quando o site consegue ler o contrato."}
@@ -281,7 +385,7 @@ export default function Inicio({ d }) {
       </section>
 
       {/* ---------- O que dá para fazer ---------- */}
-      <section className="lp-sec-bloco lp-escuro">
+      <section className="lp-sec-bloco">
         <Revelar><p className="lp-etq">O que você encontra aqui</p></Revelar>
         <Revelar atraso={60}><h2>Procure do jeito que fizer mais sentido.</h2></Revelar>
         <div className="lp-grade">
@@ -291,7 +395,7 @@ export default function Inicio({ d }) {
             ["🗺️", "Mapa", "Registros por estado e cidade, no mapa do Brasil.", "mapa"],
             ["🕰️", "Linha do tempo", "Veja como a verdade mudou em cada assunto.", "linha"],
             ["🗂️", "Assuntos", "Salas por tema: educação, economia, saneamento e mais.", "assuntos"],
-            ["🧑‍⚖️", "Revisores", "Quem vota, quantos votos deu e como decide.", "revisores"],
+            ["🎓", "Seja revisor", "Candidate-se, passe pelo período de prova e seja promovido sozinho.", "revisor"],
           ].map(([ic, t, tx, rota], i) => (
             <Revelar key={rota} atraso={(i % 3) * 90}>
               <Ir className="lp-atalho" para={rota}>
@@ -306,14 +410,14 @@ export default function Inicio({ d }) {
       </section>
 
       {/* ---------- Por que blockchain ---------- */}
-      <section className="lp-sec-bloco">
+      <section className="lp-sec-bloco lp-escuro">
         <Revelar><p className="lp-etq">Por que blockchain?</p></Revelar>
         <Revelar atraso={60}><h2>Porque o histórico não pode ter dono.</h2></Revelar>
         <div className="lp-trio">
           {[
             ["🔒", "Imutável e datado", "Depois de gravado, o registro não pode ser editado nem apagado por ninguém, nem pelos criadores do site."],
-            ["👁️", "Regras abertas", "Maioria, prazos e limite de contestações estão no código, visíveis a todos e iguais para qualquer pessoa ou tema."],
-            ["🧾", "Tudo auditável", "Cada voto, cada contestação e cada correção ficam registrados e podem ser conferidos por qualquer pessoa."],
+            ["👁️", "Regras abertas", "Sorteio do júri, maioria, prazos e limite de contestações estão no código, visíveis a todos e iguais para qualquer pessoa ou tema."],
+            ["🧾", "Tudo auditável", "Cada voto, cada recurso, cada correção e o hash do relatório da IA ficam registrados e podem ser conferidos por qualquer pessoa."],
           ].map(([ic, t, tx], i) => (
             <Revelar key={t} atraso={i * 110} className="lp-cartao">
               <span className="lp-ic">{ic}</span>
@@ -325,13 +429,13 @@ export default function Inicio({ d }) {
         <Revelar>
           <p className="lp-aviso">
             <b>O que a blockchain não faz:</b> ela não garante que o dado seja verdadeiro, só que ele não foi alterado
-            depois. Quem confere as provas são os revisores, e é por isso que o veredito exige maioria e pode ser contestado.
+            depois. Quem confere as provas são a IA e os jurados, e é por isso que o veredito da IA é provisório, o júri exige maioria e tudo pode ser contestado.
           </p>
         </Revelar>
       </section>
 
       {/* ---------- Para quem ---------- */}
-      <section className="lp-sec-bloco lp-escuro">
+      <section className="lp-sec-bloco">
         <Revelar><p className="lp-etq">Para quem é</p></Revelar>
         <Revelar atraso={60}><h2>Para quem quer saber o que é verdade.</h2></Revelar>
         <div className="lp-publico">
@@ -346,7 +450,7 @@ export default function Inicio({ d }) {
       </section>
 
       {/* ---------- Perguntas ---------- */}
-      <section className="lp-sec-bloco">
+      <section className="lp-sec-bloco lp-escuro">
         <Revelar><p className="lp-etq">Perguntas frequentes</p></Revelar>
         <Revelar atraso={60}><h2>Antes de começar.</h2></Revelar>
         <div className="lp-faq">

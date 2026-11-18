@@ -83,7 +83,7 @@
 .lp-demo-pe{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin-top:8px;gap:8px}
 
 /* ----- números ----- */
-.lp-numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:10px 0 18px}
+.lp-numeros{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:10px auto 18px}
 .lp-numero{background:linear-gradient(180deg,#14141b,#0f0f15);border:1px solid var(--line);border-radius:20px;padding:30px 24px;text-align:center}
 .lp-numero strong{display:block;font:700 clamp(40px,6vw,68px)/1 Inter,sans-serif;color:var(--ouro);letter-spacing:-.04em}
 .lp-numero span{color:#b4b4c0}
@@ -118,12 +118,13 @@
 
 @media (max-width:980px){
   .lp-hero{grid-template-columns:1fr;padding:48px 22px 40px}
-  .lp-trio,.lp-grade,.lp-numeros{grid-template-columns:1fr}
+  .lp-trio,.lp-grade{grid-template-columns:1fr}
+  .lp-numeros{grid-template-columns:1fr 1fr}
   .lp-etapas,.lp-publico{grid-template-columns:1fr 1fr}
   .lp-etapas::before{display:none}
   .lp-sec-bloco{padding:60px 22px}
 }
-@media (max-width:560px){.lp-etapas,.lp-publico{grid-template-columns:1fr}.lp-livros{height:160px;gap:5px}}
+@media (max-width:560px){.lp-numeros{grid-template-columns:1fr}.lp-pares{grid-template-columns:1fr}.lp-etapas,.lp-publico{grid-template-columns:1fr}.lp-livros{height:160px;gap:5px}}
 
 /* quem prefere menos movimento */
 @media (prefers-reduced-motion:reduce){
@@ -139,3 +140,11 @@ main.cheia footer{padding:0 20px}
 .logo img{height:30px;width:auto;display:block}
 .lp-logo{width:84px;height:auto}
 .lp-final img{width:64px;height:auto}
+
+/* ----- v5: IA, júri e revisores ----- */
+.lp-intro{max-width:70ch;margin:-12px 0 26px!important;font-size:17px}
+.lp-pares{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+.lp-par{background:linear-gradient(180deg,#14141b,#0f0f15);border:1px solid var(--line);border-radius:18px;padding:24px}
+.lp-par p{color:#b4b4c0}
+@media (max-width:980px){.lp-pares{grid-template-columns:1fr}}
+.lp-cartao .lp-ic{margin-bottom:4px}
