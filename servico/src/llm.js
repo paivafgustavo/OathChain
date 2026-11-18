@@ -4,9 +4,9 @@ import { config, modoDemo } from "./config.js";
 
 export function provedores() {
   const lista = [];
-  if (config.groqKey) lista.push({ nome: "groq", base: config.groqBase, chave: config.groqKey, modelo: "llama-3.3-70b-versatile", json: true });
-  if (config.geminiKey) lista.push({ nome: "gemini", base: config.geminiBase, chave: config.geminiKey, modelo: "gemini-flash-latest", json: true });
-  if (config.openrouterKey) lista.push({ nome: "openrouter", base: config.openrouterBase, chave: config.openrouterKey, modelo: "meta-llama/llama-3.3-70b-instruct:free", json: false });
+  if (config.groqKey) lista.push({ nome: "groq", base: config.groqBase, chave: config.groqKey, modelo: process.env.GROQ_MODEL || "openai/gpt-oss-120b", json: true });
+  if (config.geminiKey) lista.push({ nome: "gemini", base: config.geminiBase, chave: config.geminiKey, modelo: process.env.GEMINI_MODEL || "gemini-flash-latest", json: true });
+  if (config.openrouterKey) lista.push({ nome: "openrouter", base: config.openrouterBase, chave: config.openrouterKey, modelo: process.env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct:free", json: false });
   return lista;
 }
 
@@ -20,7 +20,7 @@ export function extrairJSON(texto) {
   return JSON.parse(limpo.slice(ini, fim + 1));
 }
 
-async function chamar(p, sistema, usuario) {
+async function chamar(p, sistema, usuario, comJson = p.json) {
   const corpo = {
     model: p.modelo,
     temperature: 0.2,
@@ -29,15 +29,17 @@ async function chamar(p, sistema, usuario) {
       { role: "user", content: usuario },
     ],
   };
-  if (p.json) corpo.response_format = { type: "json_object" };
+  if (comJson) corpo.response_format = { type: "json_object" };
   const r = await fetch(`${p.base}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${p.chave}` },
     body: JSON.stringify(corpo),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(45000),
   });
   if (!r.ok) {
-    const erro = new Error(`${p.nome} respondeu ${r.status}`);
+    // o corpo da resposta costuma explicar o problema (modelo desativado, chave inválida, limite...)
+    const detalhe = (await r.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 160);
+    const erro = new Error(`${p.nome} (${p.modelo}) respondeu ${r.status}: ${detalhe}`);
     erro.status = r.status;
     throw erro;
   }
@@ -57,12 +59,19 @@ export async function perguntarJSON(sistema, usuario, { prefere = 0 } = {}) {
     const p = lista[(prefere + i) % lista.length];
     for (let tentativa = 0; tentativa < 2; tentativa++) {
       try {
-        const resposta = await chamar(p, sistema, usuario);
+        // se o modelo não aceitar o "modo JSON" (erro 400), tenta de novo sem ele
+        let resposta;
+        try {
+          resposta = await chamar(p, sistema, usuario);
+        } catch (e) {
+          if (e.status === 400 && p.json) resposta = await chamar(p, sistema, usuario, false);
+          else throw e;
+        }
         return { resposta, provedor: p.nome };
       } catch (erro) {
         falhas.push(`${p.nome}: ${erro.message}`);
         // limite de uso (429) ou erro do servidor: vai para o próximo provedor; JSON ruim: tenta 1x de novo
-        if (erro.status === 429 || erro.status >= 500 || erro.status === 401 || erro.status === 403) break;
+        if ([401, 403, 404, 429].includes(erro.status) || erro.status >= 500) break;
       }
     }
   }

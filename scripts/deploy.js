@@ -2,6 +2,23 @@ const hre = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Algumas contas (com "conta inteligente" da MetaMask) só aceitam 1 transação em andamento no Alchemy.
+// Se der esse erro, espera a anterior confirmar e tenta de novo.
+async function tentar(fn) {
+  for (let i = 0; i < 12; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (!/in-flight|replacement transaction|nonce too low/i.test(String(e.message))) throw e;
+      console.log("Aguardando a transação anterior confirmar... (tentativa " + (i + 1) + ")");
+      await dormir(15000);
+    }
+  }
+  throw new Error("A rede não liberou novas transações. Veja a conta no Etherscan e tente de novo em alguns minutos.");
+}
+
 async function main() {
   const [conta] = await hre.ethers.getSigners();
   console.log("Publicando com a conta:", conta.address);
@@ -9,34 +26,33 @@ async function main() {
   const saldo = await hre.ethers.provider.getBalance(conta.address);
   console.log("Saldo:", hre.ethers.formatEther(saldo), "ETH");
 
-  const oathChain = await hre.ethers.deployContract("OathChain");
+  const oathChain = await tentar(() => hre.ethers.deployContract("OathChain"));
   await oathChain.waitForDeployment();
   const endereco = await oathChain.getAddress();
   console.log("OathChain publicado em:", endereco);
 
   // Contrato de candidatura e período de prova dos revisores
-  const gestao = await hre.ethers.deployContract("GestaoRevisores", [endereco]);
+  await dormir(5000);
+  const gestao = await tentar(() => hre.ethers.deployContract("GestaoRevisores", [endereco]));
   await gestao.waitForDeployment();
   const enderecoGestao = await gestao.getAddress();
   const blocoDeploy = (await oathChain.deploymentTransaction().wait()).blockNumber;
   console.log("GestaoRevisores publicado em:", enderecoGestao);
-  await (await oathChain.definirGestao(enderecoGestao)).wait();
+  await tentar(async () => (await oathChain.definirGestao(enderecoGestao)).wait());
 
   // Carteira do serviço de IA (opcional: AGENTE_VERIFICADOR no .env)
   if (process.env.AGENTE_VERIFICADOR) {
-    await (await oathChain.definirAgenteVerificador(process.env.AGENTE_VERIFICADOR)).wait();
+    await tentar(async () => (await oathChain.definirAgenteVerificador(process.env.AGENTE_VERIFICADOR)).wait());
     console.log("Agente verificador (IA):", process.env.AGENTE_VERIFICADOR);
   }
 
   // MODO DEMONSTRAÇÃO (DEMO=1): tudo rápido para mostrar ao vivo. Sem DEMO, valem os padrões do contrato.
   if (process.env.DEMO === "1") {
-    await (await oathChain.definirJanelaVotacao(1200)).wait();     // 20 min (selar 10 + revelar 10)
-    await (await oathChain.definirJanelaContestacao(300)).wait();  // 5 min
-    await (await oathChain.definirJanelaRevisaoIA(300)).wait();    // 5 min para recorrer da IA
-    await (await oathChain.definirJuri(3, 2, true)).wait();
-    await (
-      await gestao.definirParametros(hre.ethers.parseEther("0.001"), 2, 2, 600, 20, 600, 50)
-    ).wait();
+    await tentar(async () => (await oathChain.definirJanelaVotacao(1200)).wait());     // 20 min (selar 10 + revelar 10)
+    await tentar(async () => (await oathChain.definirJanelaContestacao(300)).wait());  // 5 min
+    await tentar(async () => (await oathChain.definirJanelaRevisaoIA(300)).wait());    // 5 min para recorrer da IA
+    await tentar(async () => (await oathChain.definirJuri(3, 2, true)).wait());
+    await tentar(async () => (await gestao.definirParametros(hre.ethers.parseEther("0.001"), 2, 2, 600, 20, 600, 50)).wait());
     console.log("Modo demonstração ligado (janelas curtas, depósito 0.001 ETH, prova de 2 votos).");
   }
   console.log("Ver no explorador: https://sepolia.etherscan.io/address/" + endereco);

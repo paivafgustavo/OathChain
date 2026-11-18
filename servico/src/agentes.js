@@ -207,14 +207,22 @@ const pick = (x) => ({ veredito: x.veredito, confianca: x.confianca });
 // ---------------- Orquestração ----------------
 export async function verificarAfirmacao({ texto, assunto = "", referencia = "" }, opcoes = {}) {
   const ctx = { demo: opcoes.demo ?? modoDemo(), avisos: [] };
+  const falar = opcoes.aoProgresso || (() => {});
   const especialidade = escolherEspecialidade(assunto, texto);
   const entrada = { texto, referencia };
 
+  falar("🔎 Pesquisador: buscando fontes (Fact Check, Wikipédia, Firecrawl)...");
   const pesq = await pesquisador(entrada, ctx);
+  falar(`   ${pesq.evidencias.length} fontes encontradas.`);
+  falar("📏 Avaliador de fontes: dando nota de credibilidade...");
   const aval = await avaliadorDeFontes(entrada, pesq.evidencias, ctx);
+  falar(`🧠 Analista (${especialidade}): analisando...`);
   const analise = await analista(entrada, pesq.evidencias, aval.fontes, especialidade, ctx);
+  falar("⚖️ Contraditor: tentando derrubar a conclusão...");
   const contra = await contraditor(entrada, pesq.evidencias, aval.fontes, analise, ctx);
+  falar("🧠 Analista: respondendo às objeções...");
   const replica = await replicaDoAnalista(entrada, pesq.evidencias, aval.fontes, analise, contra.objecoes || [], ctx);
+  falar("📋 Relator: consolidando o resultado...");
   const final = consolidar({ avaliador: aval, analistaFinal: replica, contraditorParecer: contra, fontes: aval.fontes });
 
   return {
