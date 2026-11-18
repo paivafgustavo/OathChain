@@ -4,14 +4,15 @@ const { time, loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-
 
 // Veredito: 0 Nenhum, 1 Verdadeira, 2 Falsa, 3 Inconclusiva, 4 Cumprida, 5 Parcial, 6 NaoCumprida
 const V = { Nenhum: 0, Verdadeira: 1, Falsa: 2, Inconclusiva: 3, Cumprida: 4, Parcial: 5, NaoCumprida: 6 };
-// Estado: 0 Registrada, 1 EmVerificacao, 2 Finalizada, 3 SemConsenso
-const E = { Registrada: 0, EmVerificacao: 1, Finalizada: 2, SemConsenso: 3 };
+// Estado: 0 Registrada, 1 EmVerificacao, 2 Finalizada, 3 SemConsenso, 4 Provisoria
+const E = { Registrada: 0, EmVerificacao: 1, Finalizada: 2, SemConsenso: 3, Provisoria: 4 };
 const SETE_DIAS = 7 * 24 * 3600;
 
 describe("OathChain", function () {
   async function deploy() {
     const [dono, autor, r1, r2, r3, estranho] = await ethers.getSigners();
     const livro = await ethers.deployContract("OathChain");
+    await livro.definirJuri(0, 0, false); // modo antigo: todos os revisores votam (o júri tem testes próprios)
     for (const r of [r1, r2, r3]) await livro.definirRevisor(r.address, true);
     const criterios = ethers.keccak256(ethers.toUtf8Bytes("10 escolas inauguradas"));
     return { livro, dono, autor, r1, r2, r3, estranho, criterios };
@@ -469,6 +470,163 @@ describe("OathChain", function () {
       lista = await livro.obterRevisores();
       expect(lista.length).to.equal(4);
       expect(await livro.ehRevisor(estranho.address)).to.equal(true);
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // v4: verificação por IA (veredito provisório + recurso humano)
+  // ---------------------------------------------------------------
+  describe("verificação por IA", () => {
+    const HASH = ethers.id("relatorio");
+    const URL = "http://localhost:3001/relatorios/1.json";
+
+    // contrato com o agente configurado e uma afirmação registrada (#1)
+    async function comAgente() {
+      const b = await deploy();
+      const [, , , , , , agente] = await ethers.getSigners();
+      await b.livro.definirAgenteVerificador(agente.address);
+      await b.livro.connect(b.autor).registrarAfirmacao("A inflação caiu em 2025.", "2025", 0);
+      return { ...b, agente, id: 1n };
+    }
+
+    it("só o dono define o agente e os parâmetros", async () => {
+      const { livro, estranho } = await loadFixture(deploy);
+      await expect(livro.connect(estranho).definirAgenteVerificador(estranho.address)).to.be.revertedWithCustomError(livro, "OwnableUnauthorizedAccount");
+      await expect(livro.connect(estranho).definirJanelaRevisaoIA(60)).to.be.revertedWithCustomError(livro, "OwnableUnauthorizedAccount");
+      await expect(livro.connect(estranho).definirLimiteConfianca(50)).to.be.revertedWithCustomError(livro, "OwnableUnauthorizedAccount");
+      await expect(livro.definirLimiteConfianca(101)).to.be.revertedWith("Limite invalido");
+      await expect(livro.definirJanelaRevisaoIA(0)).to.be.revertedWith("Janela invalida");
+      expect(await livro.janelaRevisaoIA()).to.equal(3 * 86400);
+      expect(await livro.limiteConfianca()).to.equal(70);
+    });
+
+    it("só o agente verificador registra o veredito da IA", async () => {
+      const { livro, id, estranho, r1 } = await loadFixture(comAgente);
+      await expect(livro.connect(estranho).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL)).to.be.revertedWith("Apenas o agente verificador");
+      await expect(livro.connect(r1).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL)).to.be.revertedWith("Apenas o agente verificador");
+    });
+
+    it("valida o registro, o tipo, o veredito, a confiança e o relatório", async () => {
+      const { livro, id, agente, autor, criterios } = await loadFixture(comAgente);
+      await expect(livro.connect(agente).registrarVerificacaoIA(99, V.Verdadeira, 90, HASH, URL)).to.be.revertedWith("Registro inexistente");
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Cumprida, 90, HASH, URL)).to.be.revertedWith("Veredito invalido para o tipo");
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Nenhum, 90, HASH, URL)).to.be.revertedWith("Veredito invalido para o tipo");
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 101, HASH, URL)).to.be.revertedWith("Confianca invalida");
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, ethers.ZeroHash, URL)).to.be.revertedWith("Relatorio obrigatorio");
+      // promessa não é verificada pela IA
+      const prazo = (await time.latest()) + 1000;
+      await livro.connect(autor).registrarPromessa("ipfs://p", criterios, prazo);
+      await expect(livro.connect(agente).registrarVerificacaoIA(2, V.Cumprida, 90, HASH, URL)).to.be.revertedWith("IA so verifica afirmacoes");
+    });
+
+    it("confiança alta: vira PROVISÓRIO, guarda o relatório e ainda não é 'verificado'", async () => {
+      const { livro, id, agente } = await loadFixture(comAgente);
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL))
+        .to.emit(livro, "VerificacaoIARegistrada").withArgs(id, V.Verdadeira, 90, HASH, URL, true);
+      const r = await livro.obterRegistro(id);
+      const ia = await livro.obterVerificacaoIA(id);
+      expect(r.estado).to.equal(E.Provisoria);
+      expect(ia.veredito).to.equal(V.Verdadeira);
+      expect(ia.confianca).to.equal(90);
+      expect(ia.hashRelatorio).to.equal(HASH);
+      expect(ia.urlRelatorio).to.equal(URL);
+      expect(ia.fimRevisao).to.equal(ia.em + BigInt(3 * 86400));
+      expect(await livro.ehVerificado(id)).to.equal(false);
+    });
+
+    it("não verifica duas vezes o mesmo registro", async () => {
+      const { livro, id, agente } = await loadFixture(comAgente);
+      await livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL);
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Falsa, 90, HASH, URL)).to.be.revertedWith("Estado invalido");
+    });
+
+    it("confiança baixa ou 'Inconclusiva': vai direto para os revisores humanos", async () => {
+      const { livro, id, agente, autor } = await loadFixture(comAgente);
+      await expect(livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 55, HASH, URL))
+        .to.emit(livro, "VerificacaoIARegistrada").withArgs(id, V.Verdadeira, 55, HASH, URL, false);
+      const r = await livro.obterRegistro(id);
+      expect(r.estado).to.equal(E.EmVerificacao);
+      expect(r.totalRevisores).to.equal(3);
+
+      await livro.connect(autor).registrarAfirmacao("Outra afirmação para o teste.", "2025", 0);
+      await livro.connect(agente).registrarVerificacaoIA(2, V.Inconclusiva, 95, HASH, URL);
+      expect((await livro.obterRegistro(2)).estado).to.equal(E.EmVerificacao);
+    });
+
+    it("o dono ajusta o limite de confiança", async () => {
+      const { livro, id, agente } = await loadFixture(comAgente);
+      await livro.definirLimiteConfianca(50);
+      await livro.connect(agente).registrarVerificacaoIA(id, V.Falsa, 55, HASH, URL);
+      expect((await livro.obterRegistro(id)).estado).to.equal(E.Provisoria);
+    });
+
+    it("sem recurso: depois da janela qualquer um confirma e o veredito nasce definitivo", async () => {
+      const { livro, id, agente, estranho } = await loadFixture(comAgente);
+      await livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL);
+      await expect(livro.connect(estranho).confirmarIA(id)).to.be.revertedWith("Janela de recurso ainda aberta");
+      await time.increase(3 * 86400 + 1);
+      await expect(livro.connect(estranho).confirmarIA(id)).to.emit(livro, "IAConfirmada").withArgs(id, V.Verdadeira);
+      const r = await livro.obterRegistro(id);
+      expect(r.estado).to.equal(E.Finalizada);
+      expect(r.resultado).to.equal(V.Verdadeira);
+      expect(await livro.ehVerificado(id)).to.equal(true);
+      expect(await livro.ehDefinitivo(id)).to.equal(true);
+    });
+
+    it("recurso: autor ou revisor, dentro da janela; abre a votação humana sem gastar a contestação", async () => {
+      const { livro, id, agente, estranho, autor, r1 } = await loadFixture(comAgente);
+      await livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL);
+      await expect(livro.connect(estranho).recorrerDaIA(id, "m")).to.be.revertedWith("Sem permissao");
+      await expect(livro.connect(r1).recorrerDaIA(id, "provas incompletas")).to.emit(livro, "RecursoDaIA").withArgs(id, r1.address, "provas incompletas");
+      const r = await livro.obterRegistro(id);
+      expect(r.estado).to.equal(E.EmVerificacao);
+      expect(r.rodada).to.equal(1);
+      expect(await livro.autorJaContestou(id)).to.equal(false);
+
+      // autor também pode recorrer (em outro registro)
+      await livro.connect(autor).registrarAfirmacao("Mais uma afirmação.", "2025", 0);
+      await livro.connect(agente).registrarVerificacaoIA(2, V.Falsa, 90, HASH, URL);
+      await expect(livro.connect(autor).recorrerDaIA(2, "m")).to.emit(livro, "RecursoDaIA");
+    });
+
+    it("não se recorre depois da janela nem de um registro sem veredito provisório", async () => {
+      const { livro, id, agente, r1 } = await loadFixture(comAgente);
+      await expect(livro.connect(r1).recorrerDaIA(id, "m")).to.be.revertedWith("Nao ha veredito provisorio");
+      await livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL);
+      await time.increase(3 * 86400 + 1);
+      await expect(livro.connect(r1).recorrerDaIA(id, "m")).to.be.revertedWith("Janela de recurso encerrada");
+      await livro.confirmarIA(id);
+      await expect(livro.confirmarIA(id)).to.be.revertedWith("Nao ha veredito provisorio");
+    });
+
+    it("os humanos prevalecem: com recurso, a maioria dos revisores decide, e o relatório da IA fica guardado", async () => {
+      const { livro, id, agente, r1, r2, r3 } = await loadFixture(comAgente);
+      await livro.connect(agente).registrarVerificacaoIA(id, V.Verdadeira, 90, HASH, URL);
+      await livro.connect(r1).recorrerDaIA(id, "fonte desatualizada");
+      await livro.connect(r2).votar(id, V.Falsa, "j");
+      await livro.connect(r3).votar(id, V.Falsa, "j");
+      await livro.finalizar(id);
+      const r = await livro.obterRegistro(id);
+      expect(r.estado).to.equal(E.Finalizada);
+      expect(r.resultado).to.equal(V.Falsa);
+      const ia = await livro.obterVerificacaoIA(id);
+      expect(ia.veredito).to.equal(V.Verdadeira); // o que a IA propôs continua registrado
+      expect(ia.hashRelatorio).to.equal(HASH);
+    });
+
+    it("correção aprovada pela IA (sem recurso) supera o registro antigo", async () => {
+      const { livro, agente, autor, estranho, r1, r2 } = await loadFixture(comAgente);
+      // #1 finalizada por humanos
+      await livro.connect(autor).abrirVerificacao(1);
+      await livro.connect(r1).votar(1, V.Verdadeira, "j");
+      await livro.connect(r2).votar(1, V.Verdadeira, "j");
+      await livro.finalizar(1);
+      // #2 corrige #1; a IA aprova e ninguém recorre
+      await livro.connect(estranho).registrarAfirmacao("Dado revisado em 2025.", "2025", 1);
+      await livro.connect(agente).registrarVerificacaoIA(2, V.Verdadeira, 92, HASH, URL);
+      await time.increase(3 * 86400 + 1);
+      await expect(livro.confirmarIA(2)).to.emit(livro, "Superada").withArgs(1, 2);
+      expect((await livro.obterRegistro(1)).superadaPor).to.equal(2);
     });
   });
 });

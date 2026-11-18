@@ -16,6 +16,11 @@ if (SEPOLIA_RPC_URL && PRIVATE_KEY) {
 }
 
 module.exports = {
-  solidity: "0.8.24",
+  // viaIR + otimizador reduzem o tamanho do contrato (o limite da rede é 24 KB)
+  solidity: {
+    version: "0.8.24",
+    settings: { viaIR: true, optimizer: { enabled: true, runs: 50 } },
+  },
   networks,
 };
+

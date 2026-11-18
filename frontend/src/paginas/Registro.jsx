@@ -7,6 +7,7 @@ import {
 } from "../oathchain";
 import { CONTRACT_ADDRESS, EXPLORADOR, NOME_DA_REDE } from "../config";
 import { MAP } from "../mapa-brasil";
+import { PainelIA, PainelJuri } from "../paineis";
 
 export default function Registro({ d, id }) {
   const r = d.registros.find((x) => x.id === Number(id));
@@ -51,15 +52,19 @@ export default function Registro({ d, id }) {
   const prazoVenceu = agora >= r.prazo;
 
   const podeAbrir = r.estado === 0 && (r.tipo === 0 ? r.euSouAutor : prazoVenceu) && d.resumo.revisoresAtivos >= d.resumo.minRevisores;
-  const podeVotar = r.estado === 1 && janelaAberta && r.euPossoVotar && r.meuVoto === 0;
-  const podeFinalizar = r.estado === 1 && (temMaioria || !janelaAberta || r.totalVotos >= total);
+  const modoJuri = !!r.juri && r.juri.tamanho > 0;
+  // Com júri e voto secreto, o voto passa pelo painel do júri (selar e revelar), não pelo botão de votar
+  const podeVotar = r.estado === 1 && !modoJuri && janelaAberta && r.euPossoVotar && r.meuVoto === 0;
+  const todosRevelaram = modoJuri && r.juri.sorteado && r.reveladosPart >= r.juri.jurados.length + r.juri.observadores.length;
+  const podeFinalizar = r.estado === 1 && (modoJuri ? r.juri.sorteado && (!janelaAberta || todosRevelaram) : temMaioria || !janelaAberta || r.totalVotos >= total);
   const podeContestar = r.estado === 2 && r.rodada < 3 && agora < r.fimContestacao && (r.euSouAutor ? !r.autorJaContestou : r.euSouRevisor);
   const podeAnexar = !!d.conta && (r.estado === 0 || (r.estado === 1 && r.euPossoVotar));
 
-  const textoVeredito = r.estado === 2 ? VEREDITOS[r.resultado] : r.estado === 3 ? "Sem consenso" : r.estado === 1 ? "Em votação" : "Aguardando verificação";
+  const textoVeredito = r.estado === 2 ? VEREDITOS[r.resultado] : r.estado === 3 ? "Sem consenso" : r.estado === 1 ? "Em votação" : r.estado === 4 ? `Provisório: ${VEREDITOS[r.ia?.veredito || 0]}` : r.tipo === 0 ? "Aguardando a IA" : "Aguardando verificação";
   let chip = "";
   if (r.estado === 2) chip = def ? "Definitivo" : `Em contestação · faltam ${restante(r.fimContestacao, agora)}`;
-  else if (r.estado === 1) chip = `Votação até ${formatarData(r.fimVotacao)}`;
+  else if (r.estado === 4) chip = r.ia && agora < r.ia.fimRevisao ? `Janela de recurso · faltam ${restante(r.ia.fimRevisao, agora)}` : "Pode ser confirmado";
+  else if (r.estado === 1) chip = r.fimVotacao ? `Votação até ${formatarData(r.fimVotacao)}` : "Aguardando o sorteio do júri";
   else if (r.estado === 0) chip = r.tipo === 1 && !prazoVenceu ? `Prazo em ${formatarData(r.prazo)}` : "Aguardando abertura da verificação";
   else chip = "Encerrado sem veredito";
 
@@ -139,13 +144,14 @@ export default function Registro({ d, id }) {
 
         <div className="leaf">
           <h3>Como os revisores votaram</h3>
-          {r.estado === 0 ? (
-            <p className="nota-v">A votação ainda não foi aberta.</p>
+          {r.estado === 0 || r.estado === 4 ? (
+            <p className="nota-v">{r.estado === 4 ? "Ninguém recorreu até agora: vale o veredito provisório da IA." : "A votação humana ainda não foi aberta."}</p>
           ) : (
             <>
               <BarraVotos contagem={r.contagem} totalRevisores={total} />
               <p style={{ margin: 0, fontSize: 14 }}>
-                {r.estado === 1 && `Para valer, um veredito precisa de ${necessarios} de ${total} votos (mais da metade).`}
+                {r.estado === 1 && total > 0 && `Para valer, um veredito precisa de ${necessarios} de ${total} votos (mais da metade).`}
+                {r.estado === 1 && total === 0 && "O júri ainda não foi sorteado."}
                 {r.estado === 2 && `Mais da metade dos ${total} revisores concordou, então o veredito vale.`}
                 {r.estado === 3 && `Nenhum veredito passou de 50% dos ${total} revisores, então nenhum foi gravado.`}
               </p>
@@ -185,7 +191,7 @@ export default function Registro({ d, id }) {
 
           {/* Ações */}
           <div className="acts" style={{ flexWrap: "wrap" }}>
-            {podeAbrir && <button disabled={ocupado} onClick={() => rodar("abrirVerificacao", [r.id])}>Abrir verificação</button>}
+            {podeAbrir && <button disabled={ocupado} onClick={() => rodar("abrirVerificacao", [r.id])}>{r.tipo === 0 ? "Pular a IA e enviar aos revisores" : "Abrir verificação"}</button>}
             {podeFinalizar && <button disabled={ocupado} onClick={() => rodar("finalizar", [r.id])}>Finalizar votação</button>}
             {podeContestar && !abrirContestar && <button className="alt" onClick={() => setAbrirContestar(true)}>Discorda deste veredito?</button>}
           </div>
@@ -216,7 +222,7 @@ export default function Registro({ d, id }) {
             </div>
           )}
 
-          {r.estado === 1 && janelaAberta && d.conta && !r.euPossoVotar && r.meuVoto === 0 && (
+          {r.estado === 1 && !modoJuri && janelaAberta && d.conta && !r.euPossoVotar && r.meuVoto === 0 && (
             <p className="nota-v" style={{ color: "inherit" }}>Só revisores votam, e o autor não vota no próprio registro.</p>
           )}
           {!d.conta && <p className="nota-v" style={{ color: "inherit" }}>Conecte uma carteira para agir neste registro.</p>}
@@ -224,6 +230,8 @@ export default function Registro({ d, id }) {
           {hash && <Aviso tipo="ok">Confirmado! <a className="lk2" href={`${EXPLORADOR}/tx/${hash}`} target="_blank" rel="noreferrer">Ver a transação</a></Aviso>}
         </div>
       </div>
+      <PainelIA r={r} d={d} />
+      <PainelJuri r={r} d={d} />
       <Ir className="main-btn" para="linha">Ver na linha do tempo</Ir>
     </>
   );

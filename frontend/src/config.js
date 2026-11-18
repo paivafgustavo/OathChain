@@ -6,6 +6,11 @@ import deployment from "./deployment.json";
 // quando você publica na Sepolia. Só edite à mão se precisar apontar para outro contrato.
 export const CONTRACT_ADDRESS = deployment.OathChain || "COLE_AQUI_O_ENDERECO_DO_CONTRATO";
 
+// Contrato de candidatura e período de prova dos revisores (também gravado pelo deploy.js)
+export const GESTAO_ADDRESS = deployment.GestaoRevisores || "";
+// Bloco em que o contrato foi publicado (acelera a leitura dos votos revelados)
+export const BLOCO_INICIAL = deployment.bloco || 0;
+
 // Rede Sepolia
 export const CHAIN_ID = 11155111;
 export const CHAIN_ID_HEX = "0xaa36a7";

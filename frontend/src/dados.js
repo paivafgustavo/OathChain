@@ -11,6 +11,7 @@ export const T={
 'Meio Ambiente':{a:'#84cc16',t:'#0b2412',e:'🌳',k:'Árvores, rios, queimadas e reciclagem',g:'linear-gradient(120deg,#164a22,#08160c)',p:'radial-gradient(circle at 10px 10px,#84cc1620 0 3px,#0000 4px) 0 0/26px 26px',b:'#5a3f24',d:E('🌳',60,20,64)+E('🍃',170,60)+E('🌎',250,14,60),n:168,pv:58}};
 
 ST.w=['Em votação','--w'];
+ST.i=['Provisório (IA)','--i'];
 ST.r=['Aguardando verificação','--r'];
 ST.p=['Parcialmente cumprida','--p'];
 SUB['Outros']=['Geral'];

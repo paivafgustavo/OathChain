@@ -3,7 +3,7 @@ import { id as hashTexto } from "ethers";
 import { ST } from "./dados";
 
 export const TIPOS = ["Afirmação", "Promessa"];
-export const ESTADOS = ["Registrada", "Em verificação", "Finalizada", "Sem consenso"];
+export const ESTADOS = ["Registrada", "Em verificação", "Finalizada", "Sem consenso", "Provisória (IA)"];
 export const VEREDITOS = [
   "—",
   "Verdadeira",
@@ -142,6 +142,7 @@ export function definitivo(r, agora) {
 export function statusDe(r, agora) {
   if (r.superadaPor > 0) return "x";
   if (r.estado === 0) return "r";
+  if (r.estado === 4) return "i";
   if (r.estado === 1) return "w";
   if (r.estado === 3) return "s";
   if (agora < r.fimContestacao && r.rodada < 3) return "c";
@@ -151,6 +152,7 @@ export function statusDe(r, agora) {
 export function rotuloStatus(r, agora) {
   const k = statusDe(r, agora);
   if (k === "v" || k === "f" || k === "p") return VEREDITOS[r.resultado];
+  if (k === "i") return `Provisório (IA): ${VEREDITOS[r.ia?.veredito || 0]}`;
   if (k === "s" && r.estado === 2) return VEREDITOS[r.resultado];
   return ST[k][0];
 }
@@ -160,7 +162,7 @@ export function rotuloStatus(r, agora) {
 // ---------------------------------------------------------------
 
 export async function carregarResumo(contrato, conta) {
-  const [proximoId, revisoresAtivos, minRevisores, janelaVotacao, janelaContestacao, dono, euSouRevisor] =
+  const [proximoId, revisoresAtivos, minRevisores, janelaVotacao, janelaContestacao, dono, euSouRevisor, tamanhoJuri, votoSecreto, janelaRevisaoIA, agente] =
     await Promise.all([
       contrato.proximoId(),
       contrato.revisoresAtivos(),
@@ -169,6 +171,10 @@ export async function carregarResumo(contrato, conta) {
       contrato.janelaContestacao(),
       contrato.owner(),
       conta ? contrato.ehRevisor(conta) : Promise.resolve(false),
+      contrato.tamanhoJuri(),
+      contrato.votoSecreto(),
+      contrato.janelaRevisaoIA(),
+      contrato.agenteVerificador(),
     ]);
   return {
     totalRegistros: Number(proximoId) - 1,
@@ -177,6 +183,10 @@ export async function carregarResumo(contrato, conta) {
     janelaVotacao: Number(janelaVotacao),
     janelaContestacao: Number(janelaContestacao),
     dono,
+    tamanhoJuri: Number(tamanhoJuri),
+    votoSecreto,
+    janelaRevisaoIA: Number(janelaRevisaoIA),
+    agenteVerificador: agente,
     euSouRevisor,
     euSouDono: !!conta && dono.toLowerCase() === conta.toLowerCase(),
   };
@@ -207,11 +217,42 @@ export async function carregarRegistros(contrato, conta) {
       const rodada = Number(r.rodada);
       const vs = VEREDITOS_DO_TIPO[tipo];
 
-      const [contagens, meuVoto, autorJaContestou] = await Promise.all([
+      const emVotacao = Number(r.estado) === 1;
+      const [contagens, meuVoto, autorJaContestou, ia, juriBruto, meuPapel, meuSelo] = await Promise.all([
         Promise.all(vs.map((v) => contrato.obterContagem(id, rodada, v))),
         conta ? contrato.obterVoto(id, rodada, conta) : Promise.resolve(0n),
         contrato.autorJaContestou(id),
+        tipo === 0 ? contrato.obterVerificacaoIA(id) : Promise.resolve(null),
+        emVotacao ? contrato.obterJuri(id, rodada) : Promise.resolve(null),
+        emVotacao && conta ? contrato.obterPapel(id, rodada, conta) : Promise.resolve(0n),
+        emVotacao && conta ? contrato.obterCompromisso(id, rodada, conta) : Promise.resolve("0x"),
       ]);
+
+      // Verificação automática (IA)
+      const verIA = ia && Number(ia.em) > 0
+        ? {
+            veredito: Number(ia.veredito), confianca: Number(ia.confianca), hashRelatorio: ia.hashRelatorio,
+            urlRelatorio: ia.urlRelatorio, em: Number(ia.em), fimRevisao: Number(ia.fimRevisao),
+          }
+        : null;
+
+      // Júri sorteado desta rodada (só existe quando há votação)
+      let juri = null;
+      let reveladosPart = 0;
+      if (juriBruto) {
+        const info = juriBruto[0];
+        const jurados = [...juriBruto[1]];
+        const observadores = [...juriBruto[2]];
+        juri = {
+          tamanho: Number(info.tamanho), aprendizes: Number(info.aprendizes), secreto: info.secreto, sorteado: info.sorteado,
+          bloco: Number(info.bloco), fimCompromisso: Number(info.fimCompromisso), jurados, observadores,
+        };
+        if (juri.sorteado) {
+          const todos = [...jurados, ...observadores];
+          const v = await Promise.all(todos.map((e) => contrato.obterVoto(id, rodada, e)));
+          reveladosPart = v.filter((x) => Number(x) > 0).length;
+        }
+      }
 
       const contagem = vs.map((v, i) => ({ veredito: v, qtd: Number(contagens[i]) }));
       const euSouAutor = minha !== null && r.autor.toLowerCase() === minha;
@@ -248,7 +289,14 @@ export async function carregarRegistros(contrato, conta) {
         autorJaContestou,
         euSouAutor,
         euSouRevisor: ehRevisor,
-        euPossoVotar: ehRevisor && epocaRevisor <= epocaAbertura && !euSouAutor,
+        ia: verIA,
+        juri,
+        reveladosPart,
+        meuPapel: Number(meuPapel),
+        meuSelo: meuSelo && !/^0x0*$/.test(meuSelo) ? meuSelo : "",
+        euPossoVotar: juri && juri.tamanho > 0
+          ? Number(meuPapel) !== 0
+          : ehRevisor && epocaRevisor <= epocaAbertura && !euSouAutor,
       };
     })
   );

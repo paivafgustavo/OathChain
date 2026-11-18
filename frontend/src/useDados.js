@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { BrowserProvider, Contract, JsonRpcProvider, isAddress } from "ethers";
 import abi from "./abi.json";
-import { CONTRACT_ADDRESS, CHAIN_ID, CHAIN_ID_HEX, EXPLORADOR, RPC_PUBLICO } from "./config";
+import abiGestao from "./abiGestao.json";
+import { CONTRACT_ADDRESS, GESTAO_ADDRESS, CHAIN_ID, CHAIN_ID_HEX, EXPLORADOR, RPC_PUBLICO } from "./config";
 import { carregarResumo, carregarRegistros } from "./oathchain";
 
 // Tudo o que as telas precisam: carteira, rede, resumo do contrato e registros.
@@ -35,6 +36,14 @@ export function useDados() {
     const provider = new BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     return new Contract(CONTRACT_ADDRESS, abi, signer);
+  }, []);
+
+  // Contrato de candidatura (só existe depois do deploy v5)
+  const gestaoValida = isAddress(GESTAO_ADDRESS);
+  const lerGestao = useCallback(async () => new Contract(GESTAO_ADDRESS, abiGestao, criarProvider()), []);
+  const obterGestao = useCallback(async () => {
+    const provider = new BrowserProvider(window.ethereum);
+    return new Contract(GESTAO_ADDRESS, abiGestao, await provider.getSigner());
   }, []);
 
   const atualizar = useCallback(async () => {
@@ -165,5 +174,8 @@ export function useDados() {
     trocarParaSepolia,
     lerContrato,
     obterContrato,
+    gestaoValida,
+    lerGestao,
+    obterGestao,
   };
 }

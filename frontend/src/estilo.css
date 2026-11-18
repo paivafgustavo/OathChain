@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap');
 
-:root{--bg:#09090b;--card:#121216;--line:#26262e;--text:#f2f2f4;--mut:#8f8f9b;--brass:#c9a24b;--paper:#f3ead3;--pt:#2a2118;--v:#2da36f;--f:#e5484d;--c:#e0a92a;--s:#7a7c84;--x:#6d56a3;--acc:#c9a24b;--board:#3b2c20;--pat:none;--g:#121216;--tint:#17171f;--w:#4c8dd6;--r:#9a9aa6;--p:#e08a2a;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{--bg:#09090b;--card:#121216;--line:#26262e;--text:#f2f2f4;--mut:#8f8f9b;--brass:#c9a24b;--paper:#f3ead3;--pt:#2a2118;--v:#2da36f;--f:#e5484d;--c:#e0a92a;--s:#7a7c84;--x:#6d56a3;--acc:#c9a24b;--board:#3b2c20;--pat:none;--g:#121216;--tint:#17171f;--w:#4c8dd6;--r:#9a9aa6;--p:#e08a2a;--i:#14b8a6;--i:#14b8a6;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
 html,body{margin:0}
 body{background:radial-gradient(90% 420px at 50% 0,var(--tint),var(--bg) 100%) no-repeat,var(--bg);color:var(--text);font:400 16px/1.5 Inter,system-ui,sans-serif;min-height:100vh}
@@ -139,3 +139,26 @@ a.lk2{color:var(--acc);text-decoration:underline;cursor:pointer}
 .wallet.on{border-color:var(--v);color:#9be3c0}
 .sub-tit{font:600 22px Newsreader,serif;margin:0 0 8px}
 @media (max-width:640px){.f .linha2{grid-template-columns:1fr}}
+
+/* ===== v5: painéis da IA, júri e candidatura ===== */
+.painel{margin:0 0 18px}
+.painel h3{font:600 22px Newsreader,Georgia,serif;margin:0 0 10px}
+.painel h4{margin:14px 0 6px}
+.painel input[type=text],.painel textarea{width:100%;box-sizing:border-box;margin:6px 0;padding:10px 12px;border-radius:10px;border:1px solid #34343f;background:#0b0b0e;color:var(--text);font:400 15px Inter,sans-serif}
+.painel textarea{resize:vertical}
+.barra-conf{height:10px;background:#26262e;border-radius:6px;overflow:hidden;margin:6px 0}
+.barra-conf i{display:block;height:100%;background:linear-gradient(90deg,var(--i),var(--v))}
+.acts2{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.acts2 button{border:1px solid var(--line);background:#1a1a20;color:var(--text);border-radius:99px;padding:8px 16px;font-weight:600;font-size:14px;cursor:pointer}
+.acts2 button:disabled{opacity:.5;cursor:not-allowed}
+.acts2 .main-btn.peq{background:var(--acc);color:#14100a;border:0;font-size:15px;padding:9px 18px}
+.agentes{padding-left:18px;margin:6px 0}.agentes li{margin:6px 0}
+.relatorio details{margin:8px 0;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#0b0b0e}
+.relatorio summary,.painel summary{cursor:pointer;font-weight:600}
+.fases{display:flex;gap:6px;list-style:none;padding:0;margin:0 0 12px;flex-wrap:wrap}
+.fases li{padding:5px 12px;border-radius:99px;border:1px solid var(--line);color:var(--mut);font-size:13px;font-weight:600}
+.fases li.on{background:var(--acc);color:#14100a;border-color:var(--acc)}
+.fases li.feito{color:var(--v);border-color:var(--v)}
+.opcoes{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0}
+.opcoes label{cursor:pointer;font-weight:600}
+.passos{padding-left:20px;margin:8px 0}.passos li{margin:8px 0}

@@ -13,18 +13,22 @@
 ![Hardhat](https://img.shields.io/badge/Hardhat-2.x-FFF100?logo=ethereum&logoColor=black)
 ![OpenZeppelin](https://img.shields.io/badge/OpenZeppelin-5.x-4E5EE4)
 ![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=black)
-![Testes](https://img.shields.io/badge/testes-41%20passando-2ea44f)
+![Testes](https://img.shields.io/badge/testes-76%20%2B%2011%20passando-2ea44f)
+![IA](https://img.shields.io/badge/IA-4%20agentes%20gratuitos-14b8a6)
 ![Rede](https://img.shields.io/badge/rede-Sepolia%20(testnet)-8247E5)
 ![Status](https://img.shields.io/badge/status-protótipo%20acadêmico-orange)
 ![Licença](https://img.shields.io/badge/licença-MIT-blue)
 
 [Visão geral](#-visão-geral) •
 [Como funciona](#-como-funciona) •
+[Verificação híbrida](#-verificação-híbrida-ia--júri) •
+[Revisores sem porteiro](#-revisores-sem-porteiro-candidatura-e-prova) •
 [A verdade muda com o tempo](#-a-verdade-muda-com-o-tempo) •
 [Regras](#-as-regras-do-jogo) •
 [O site](#-o-site) •
 [Como rodar](#-como-rodar) •
 [Roadmap](#-roadmap) •
+[Ameaças](#-modelo-de-ameaças) •
 [Limitações](#-limitações-e-riscos)
 
 </div>
@@ -35,13 +39,13 @@
 
 **OathChain** (do inglês *oath*, "juramento") é um contrato inteligente, com um site em cima dele, que funciona como um **livro-razão público de afirmações e promessas verificadas**.
 
-Qualquer pessoa pode **consultar**. Os **revisores** cadastrados registram, analisam as provas e votam. O resultado fica gravado na blockchain, com **data, autor e histórico completo de revisões**, sem que ninguém consiga apagar ou reescrever o passado.
+Qualquer pessoa pode **consultar**. A verificação é **híbrida**: quatro **agentes de IA** (100% gratuitos) pesquisam as fontes e dão um veredito **provisório** em minutos; **humanos** só entram para recorrer, em um **júri sorteado** com **voto secreto**. O resultado fica gravado na blockchain, com **data, autor, relatório da IA e histórico completo**, sem que ninguém consiga apagar ou reescrever o passado.
 
 - 🗣️ **Afirmação:** uma declaração sobre um fato, sempre ligada a um **período de referência** (por exemplo, "em 2025").
 - 🤝 **Promessa:** um compromisso com **prazo** e **critérios mensuráveis** definidos no momento do registro.
 
 > **Duas regras de ouro:**
-> 1. Só existe veredito se **mais de 50% dos revisores** concordarem. Sem maioria, nenhum veredito é gravado.
+> 1. Só existe veredito se a **IA tiver confiança alta e ninguém recorrer**, ou se **mais de 50% do júri** concordar. Sem isso, nenhum veredito é gravado.
 > 2. Um veredito é uma **foto datada**, e não uma verdade eterna. Se o fato mudar, um **novo registro** o substitui, e o antigo continua visível como histórico.
 
 Este projeto é a entrega do **bloco 5 do curso de blockchain da LetsCocreate**.
@@ -79,18 +83,23 @@ Este projeto é a entrega do **bloco 5 do curso de blockchain da LetsCocreate**.
 | Papel | O que faz |
 |-------|-----------|
 | 📝 **Autor** | Registra uma afirmação ou promessa, anexa fontes e pode contestar um veredito **uma única vez**. |
-| 🧑‍⚖️ **Revisor** | Vota nos registros, com justificativa, e também anexa fontes durante a votação. Não vota no próprio registro. |
-| 👀 **Público** | Consulta registros, votos, fontes e histórico, sem precisar de carteira. |
-| 🔑 **Dono do contrato** | Cadastra e remove revisores e ajusta parâmetros (mínimo de revisores e janelas de tempo). |
+| 🤖 **Agentes de IA** | Quatro agentes pesquisam, avaliam as fontes, analisam e contradizem. O serviço grava o veredito **provisório** com um relatório auditável. |
+| 🧑‍⚖️ **Jurado** | Revisor sorteado para uma rodada. Sela o voto, depois o revela com justificativa e link de fonte. Não julga o próprio registro. |
+| 🎓 **Aprendiz** | Candidato em período de prova. Observa júris reais e vota **sem que o voto conte** no resultado. |
+| 👀 **Público** | Consulta registros, relatórios, votos, fontes e histórico, sem precisar de carteira. |
+| 🔑 **Dono do contrato** | Ajusta parâmetros (janelas, tamanho do júri) e define a carteira do serviço de IA. **Não escolhe revisores**: eles entram pela candidatura. |
 
 ### Ciclo de vida de um registro
 
 ```mermaid
 stateDiagram-v2
     [*] --> Registrada: registrar afirmacao ou promessa
-    Registrada --> EmVerificacao: abrirVerificacao
-    EmVerificacao --> Finalizada: mais de 50 por cento dos revisores no mesmo veredito
-    EmVerificacao --> SemConsenso: todos votaram ou janela encerrada sem maioria
+    Registrada --> Provisoria: IA com confianca alta
+    Registrada --> EmVerificacao: IA inconclusiva ou autor pula a IA
+    Provisoria --> EmVerificacao: recurso de humano na janela
+    Provisoria --> Finalizada: janela sem recurso (confirmarIA)
+    EmVerificacao --> Finalizada: mais de 50 por cento do juri
+    EmVerificacao --> SemConsenso: sem maioria
     Finalizada --> EmVerificacao: contestar dentro da janela
     Finalizada --> Definitivo: janela de contestacao encerrada
     SemConsenso --> [*]
@@ -99,17 +108,18 @@ stateDiagram-v2
 
 | Estado | Significado |
 |--------|-------------|
-| `Registrada` | O registro existe e aceita fontes de qualquer pessoa. |
-| `EmVerificacao` | A votação está aberta. Só revisores habilitados votam e anexam fontes. |
-| `Finalizada` | Houve maioria. O veredito está gravado e ainda pode ser **contestado** durante a janela. |
+| `Registrada` | O registro existe. Afirmações aguardam a IA; qualquer pessoa pode anexar fontes. |
+| `Provisoria` | A IA decidiu com confiança alta. Humanos têm a **janela de recurso** (3 dias) para recorrer. |
+| `EmVerificacao` | Júri humano: sorteio, voto selado, voto revelado. |
+| `Finalizada` | Houve veredito válido. Ainda pode ser **contestado** durante a janela. |
 | **Definitivo** | Não é um estado do contrato: é `ehDefinitivo(id) = true`, quando a janela de contestação fechou ou as 3 rodadas se esgotaram. |
 | `SemConsenso` | Ninguém teve mais de 50%. **Nenhum veredito foi gravado.** Estado final. |
 
-### Quem abre a verificação?
+### Quem aciona cada passo?
 
-- **Promessa:** qualquer pessoa, **depois que o prazo vence**.
-- **Afirmação:** somente o **autor**, quando as fontes já estiverem anexadas.
-- Em ambos os casos é preciso ter pelo menos **3 revisores** cadastrados.
+- **Afirmação:** a IA verifica sozinha. O autor pode **pular a IA** e mandar direto aos revisores.
+- **Promessa:** qualquer pessoa abre a verificação **depois que o prazo vence** (a IA não verifica promessas: cumprimento depende de fatos futuros).
+- **Sorteio, finalização e confirmação da IA:** qualquer pessoa aciona. Ninguém tem privilégio.
 
 ### Vereditos possíveis
 
@@ -125,24 +135,96 @@ O contrato rejeita um veredito que não combine com o tipo (por exemplo, "Cumpri
 ```mermaid
 sequenceDiagram
     autonumber
-    actor A as Autor (revisor)
+    actor A as Autor
     participant C as Contrato OathChain
-    actor R as Outros revisores
+    participant IA as Serviço de IA (4 agentes)
+    actor J as Jurados sorteados
     actor P as Público
 
     A->>C: registrarAfirmacao(texto, periodo 2025)
-    A->>C: anexarFonte(relatório oficial)
-    A->>C: abrirVerificacao(id)
-    Note over C: Foto dos revisores e janela de 7 dias
-    R->>C: votar(Verdadeira) - revisor 2
-    R->>C: votar(Verdadeira) - revisor 3
-    R->>C: votar(Verdadeira) - revisor 4
+    IA->>C: registrarVerificacaoIA(Verdadeira, 82%, hash do relatório)
+    Note over C: Provisória, 3 dias para recurso
+    P->>IA: baixa o relatório e confere o hash
+    J->>C: recorrerDaIA (um revisor discorda)
+    P->>C: sortearJurados (hash de bloco futuro)
+    J->>C: comprometerVoto(hash) - 1ª metade
+    J->>C: revelarVoto(veredito, sal, justificativa, link) - 2ª metade
     P->>C: finalizar(id)
-    Note over C: 3 de 5 revisores, mais de 50 por cento
+    Note over C: 3 de 5 jurados, mais de 50 por cento
     C-->>P: Finalizada com resultado Verdadeira
-    Note over C: Janela de contestação de 7 dias
-    Note over C: Janela fecha, o veredito fica definitivo
+    Note over C: Janela de contestação de 7 dias, depois definitivo
 ```
+
+---
+
+## 🤖 Verificação híbrida (IA + júri)
+
+A professora do curso apontou que votação humana é lenta e que é difícil conseguir revisores confiáveis. A resposta do projeto: **a IA decide primeiro, os humanos só recorrem**.
+
+```mermaid
+flowchart LR
+    A[Afirmação registrada] --> P[🔎 Pesquisador<br/>busca fontes]
+    P --> V[📏 Avaliador de fontes<br/>nota de credibilidade]
+    V --> N[🧠 Analista especialista<br/>veredito + confiança]
+    N --> C[⚖️ Contraditor<br/>tenta derrubar]
+    C --> N2[🧠 Réplica do analista]
+    N2 --> R[📋 Relator em código<br/>regras fixas]
+    R --> X{Confiança ≥ 70<br/>e não inconclusiva?}
+    X -- Sim --> PR[Veredito PROVISÓRIO<br/>3 dias para recurso]
+    X -- Não --> J[Júri humano sorteado]
+    PR -- recurso --> J
+    PR -- sem recurso --> F[Finalizada]
+```
+
+**Os 4 agentes** usam apenas provedores **gratuitos** (Groq, Gemini e OpenRouter `:free`), alternando entre eles quando um atinge o limite. Evidências vêm do Google Fact Check Tools, da Wikipédia e do Firecrawl (plano gratuito).
+
+| Agente | Função |
+|--------|--------|
+| 🔎 Pesquisador | Cria as consultas e coleta as evidências. |
+| 📏 Avaliador de fontes | Dá credibilidade de 0 a 100 a cada fonte (oficial e checagem profissional valem mais; blog vale menos). |
+| 🧠 Analista | Especialista no assunto (economia, saúde, política, educação, ciência, meio ambiente, segurança). Só pode usar as fontes encontradas. |
+| ⚖️ Contraditor | Procura falhas na conclusão do analista (fonte fraca, período errado, dado fora de contexto). |
+| 📋 Relator | **Não é IA.** É código com regras fixas e auditáveis: maioria de 2 em 3 votos; confiança = média de quem concordou; tetos (menos de 2 fontes = 50; nenhuma fonte com credibilidade ≥ 60 = 40; contraditor discorda = ×0,8). |
+
+**Por que isso é confiável?**
+
+- 🧾 O relatório completo é um arquivo de texto cujo **hash (keccak256) vai para a blockchain**. O site baixa o arquivo e confere o hash na hora.
+- 🛡️ O texto das páginas é tratado como **dado, nunca como instrução** (defesa contra *prompt injection*), e respostas inválidas da IA viram "Inconclusiva".
+- 🔒 O serviço tem uma carteira própria (`agenteVerificador`) e **só ele** registra o veredito da IA. Ele **nunca decide sozinho em definitivo**: sempre há janela de recurso.
+- 📉 Limite diário de verificações protege as cotas gratuitas.
+
+> ⚠️ **Honestidade:** a IA pode errar. Por isso o veredito dela é provisório, o relatório é público e qualquer revisor pode recorrer. A IA só verifica **fatos checáveis**; opinião e previsão tendem a sair "Inconclusiva".
+
+### O júri humano (recurso)
+
+1. **Sorteio:** `sortearJurados` usa o hash de um bloco que ainda não existia na abertura. Sem repetição; exclui o autor; prefere quem não julgou a rodada anterior.
+2. **Selar (1ª metade da janela):** cada jurado grava só `hash(veredito, sal, endereço, id, rodada)`.
+3. **Revelar (2ª metade):** mostra o voto com justificativa e link de fonte. O contrato confere o selo.
+4. **Resultado:** maioria absoluta do júri. Quem foi sorteado e não revelou ganha uma **falta**.
+
+No site, o "sal" é derivado de uma assinatura da MetaMask: se a pessoa fechar a página, basta assinar de novo e o voto é recuperado.
+
+---
+
+## 🎓 Revisores sem porteiro: candidatura e prova
+
+Ninguém precisa pedir a uma pessoa para virar revisor, e o dono do contrato **não cadastra** ninguém. O contrato `GestaoRevisores` cuida de tudo:
+
+```mermaid
+flowchart LR
+    A[Candidatura<br/>depósito 0,01 ETH de teste] --> B[Aprendiz<br/>observa júris reais]
+    B --> C{5 votos fundamentados<br/>≤ 2 faltas<br/>7 dias de prova<br/>vaga na janela?}
+    C -- Sim --> D[Revisor<br/>promoção automática]
+    C -- Não --> B
+    B -- faltas demais --> E[Expulso<br/>saca o que sobrou]
+    D -- faltas demais --> B
+```
+
+- **O que conta:** participar com fundamentação (justificativa + link de fonte).
+- **O que NÃO conta:** concordar com a maioria. O contrato **nunca compara** o voto do aprendiz com o resultado, e discordar **não custa nada**. Assim ninguém é induzido a "ir com as outras": quem pesquisa e chega a um veredito diferente não perde nada.
+- **O que custa:** ser sorteado e **não participar**. Cada falta tira 20% do depósito (o dinheiro fica retido no contrato) e, acima de 2 faltas, o aprendiz sai.
+- **Freio anti-enxurrada:** só 20% do total de revisores (mínimo 1) pode ser promovido por semana, o que impede que uma empresa crie centenas de contas e domine o júri de uma vez.
+- Qualquer pessoa pode chamar `promover`: sem porteiro.
 
 ---
 
@@ -175,36 +257,41 @@ flowchart LR
 
 ### Regra da maioria
 
-O veredito vence quando tem **mais de 50% dos revisores** que existiam **no momento em que a rodada abriu**. A conta usa o total de revisores, e não apenas os que votaram.
+O veredito vence quando tem **mais de 50% do júri sorteado** (jurados, não aprendizes). A conta usa o **tamanho do júri**, e não só quem votou: quem não revela o voto conta como ausente.
 
-| Revisores na rodada | Votos iguais necessários |
-|:-------------------:|:------------------------:|
+| Jurados | Votos iguais necessários |
+|:-------:|:------------------------:|
 | 3 | 2 |
-| 4 | 3 |
 | 5 | 3 |
 | 7 | 4 |
 
-Assim que um veredito alcança a maioria, **ele já não pode ser revertido** pelos votos restantes, e a finalização pode acontecer sem esperar os demais.
+Com o modo antigo (`tamanhoJuri = 0`), todos os revisores votam e vale a mesma regra sobre o total de revisores.
 
 ### Parâmetros do contrato
 
 | Parâmetro | Valor inicial | Quem altera |
 |-----------|:-------------:|-------------|
 | `minRevisores` | 3 | Dono |
-| `janelaVotacao` | 7 dias | Dono (vale só para rodadas futuras) |
-| `janelaContestacao` | 7 dias | Dono (vale só para vereditos futuros) |
+| `tamanhoJuri` / `aprendizesPorJuri` | 5 / 2 | Dono (vale só para rodadas futuras) |
+| `votoSecreto` | ligado | Dono |
+| `janelaVotacao` | 7 dias (metade para selar, metade para revelar) | Dono |
+| `janelaContestacao` | 7 dias | Dono |
+| `janelaRevisaoIA` | 3 dias | Dono |
+| `limiteConfianca` | 70 | Dono |
 | `MAX_RODADAS` | 3 (constante) | Ninguém |
 
 ### Proteções embutidas
 
-- 🔒 **Revisores "fotografados":** quem entra depois que a rodada abre **não vota nela**, e o total usado na maioria não muda no meio da votação.
-- 🚫 **O autor não vota** no próprio registro, mesmo que seja revisor.
-- 1️⃣ **O autor contesta uma única vez.**
-- 🔁 **No máximo 3 rodadas por registro** (1 votação inicial + 2 contestações), para qualquer pessoa.
-- ⏳ **Janela de votação** e **janela de contestação**, "fotografadas" no momento em que começam: mudar o parâmetro depois não afeta o que já está em andamento.
-- 📎 **Fontes:** antes da verificação qualquer pessoa anexa; durante a verificação, só revisores habilitados; depois de encerrado, ninguém.
-- 🗂️ **Histórico preservado:** votos e contagens ficam separados por rodada, e uma contestação nunca apaga a rodada anterior.
-- 🧾 **Correção só de registro finalizado**, e só de afirmação por afirmação.
+- 🎲 **Júri sorteado** com o hash de um bloco futuro: nem o autor nem o dono escolhem quem julga.
+- 🔒 **Voto secreto (commit-reveal):** ninguém vê o voto dos outros até a etapa de revelar, o que evita copiar a maioria.
+- 📎 **Voto fundamentado:** revelar exige justificativa (mínimo de 40 caracteres) e um link de fonte.
+- 🧾 **Relatório da IA com hash na blockchain:** qualquer pessoa baixa o relatório e confere que ele não foi alterado.
+- 🚫 **O autor não é jurado** do próprio registro.
+- 🔁 **Nova rodada, novo júri:** quem julgou antes é evitado.
+- 1️⃣ **O autor contesta uma única vez**; no máximo 3 rodadas por registro.
+- ⏳ **Janelas "fotografadas":** mudar um parâmetro não afeta o que já está em andamento.
+- 📎 **Fontes:** antes da verificação qualquer pessoa anexa; durante, só quem está no júri; depois de encerrado, ninguém.
+- 🗂️ **Histórico preservado:** votos e contagens ficam separados por rodada.
 
 ### O que acontece sem maioria?
 
@@ -230,9 +317,10 @@ O site é uma aplicação **React (Vite)** que lê o contrato direto da blockcha
 | 🏠 **Início** | Página de apresentação, animada, para quem chega pela primeira vez: o problema, como funciona (registrar, votar, veredito, corrigir), números ao vivo do contrato, perguntas frequentes e atalhos para as outras telas. |
 | 📚 **Estante** | Cada registro é um livro, com a cor da situação (em votação, em contestação, definitivo, superado, sem consenso). Filtros por situação e por ano, panorama e últimas atualizações. |
 | 🔎 **Verificar** | Pesquisa se uma afirmação já foi verificada. Revisores veem o botão para registrar uma nova. |
-| 📄 **Registro** | A página de um registro: veredito, votos, fontes, histórico de correções e as ações (abrir verificação, votar, finalizar, contestar, anexar fonte). |
+| 📄 **Registro** | A página de um registro: veredito, votos, fontes, histórico de correções e as ações. Inclui o **painel da IA** (veredito provisório, confiança, relatório com conferência de hash, botão de recurso) e o **painel do júri** (sorteio, selar, revelar, votos fundamentados). |
 | 🗺️ **Mapa** | Registros por estado e cidade, com a estante de cada região. |
-| 🧑‍⚖️ **Revisores** | Painel de quem vota (votos dados, votos pendentes, % de acordo com a maioria) e a lista de revisores cadastrados. |
+| 🧑‍⚖️ **Revisores** | Painel de quem vota (votos dados, votos pendentes) e a lista de revisores. |
+| 🎓 **Seja revisor** | Candidatura com depósito, progresso da prova (votos, faltas, tempo), promoção automática, desistência com saque e a lista de candidatos. |
 | 🕰️ **Linha do tempo** | Como a verdade mudou em cada assunto, com a cadeia de correções. |
 | 🗂️ **Assuntos** | Uma sala para cada assunto: Educação, Economia, Saneamento, Saúde, Segurança e Meio Ambiente. |
 
@@ -269,18 +357,25 @@ flowchart TB
     end
 
     subgraph Rede["⛓️ Blockchain (Sepolia)"]
-        SC["Contrato OathChain<br/>registros, votos, regras e eventos"]
+        SC["OathChain<br/>registros, júri, votos, regras"]
+        GR["GestaoRevisores<br/>candidatura, prova, promoção"]
     end
 
     subgraph Fora["☁️ Fora da blockchain"]
-        IPFS["IPFS<br/>textos e fontes<br/>(planejado)"]
-        IA["IA opcional<br/>só sugere fontes, nunca vota<br/>(planejado)"]
+        SV["Serviço de IA (Node.js)<br/>4 agentes + relator"]
+        LLM["Groq · Gemini · OpenRouter<br/>(gratuitos)"]
+        EV["Fact Check · Wikipédia · Firecrawl"]
+        IPFS["IPFS (planejado)"]
     end
 
     UI -- leitura --> SC
     UI --> W --> SC
-    UI -.-> IPFS
-    IA -.sugestões.-> UI
+    W --> GR
+    SC <-- hooks --> GR
+    SV -- registrarVerificacaoIA --> SC
+    SV --> LLM
+    SV --> EV
+    UI -- relatório + conferência de hash --> SV
     SC -. guardará só o CID .-> IPFS
 ```
 
@@ -295,7 +390,7 @@ Registro
 ├── hashCriterios      -> hash dos critérios da promessa
 ├── prazo, criadoEm
 ├── estado, rodada, resultado
-├── "foto" da rodada: totalRevisores, epocaAbertura, fimVotacao
+├── "foto" da rodada: totalRevisores (tamanho do júri), epocaAbertura, fimVotacao
 ├── veredito datado: finalizadoEm, fimContestacao
 └── afirmações: referencia (período), substitui, superadaPor
 
@@ -311,18 +406,24 @@ Fonte
 | `registrarPromessa(conteudo, hashCriterios, prazo)` | Qualquer carteira* | Cria uma promessa com prazo no futuro e critérios obrigatórios. |
 | `anexarFonte(id, cid, hash)` | Qualquer pessoa ou revisor | Anexa uma fonte ao registro. |
 | `abrirVerificacao(id)` | Público (promessa) ou autor (afirmação) | Abre a votação e tira a "foto" dos revisores. |
-| `votar(id, veredito, justificativa)` | Revisor habilitado | Registra um voto por rodada. |
+| `registrarVerificacaoIA(id, veredito, confianca, hash, url)` | Só o `agenteVerificador` | Grava o veredito provisório da IA (ou manda ao júri se a confiança for baixa). |
+| `recorrerDaIA(id, motivo)` | Autor ou revisor | Abre o júri humano dentro da janela de recurso (não gasta a contestação). |
+| `confirmarIA(id)` | Qualquer pessoa | Passada a janela sem recurso, finaliza com o veredito da IA. |
+| `sortearJurados(id)` | Qualquer pessoa | Sorteia o júri com o hash do bloco futuro. |
+| `comprometerVoto(id, hash)` / `revelarVoto(id, veredito, sal, justificativa, link)` | Jurado ou aprendiz | Voto secreto em duas etapas. |
+| `votar(id, veredito, justificativa)` | Jurado | Voto aberto (só com `votoSecreto` desligado ou modo antigo). |
 | `finalizar(id)` | Qualquer pessoa | Fecha a rodada: `Finalizada` ou `SemConsenso`. Aplica a substituição, se houver. |
 | `contestar(id, motivo)` | Autor (1 vez) ou revisor | Abre uma nova rodada, dentro da janela e do limite de 3. |
-| `definirRevisor`, `definirMinRevisores`, `definirJanelaVotacao`, `definirJanelaContestacao` | Dono | Ajustam revisores e parâmetros. |
+| `definirJuri`, `definirGestao`, `definirAgenteVerificador`, `definirJanelaRevisaoIA`, `definirLimiteConfianca`, `definirMinRevisores`, `definirJanelaVotacao`, `definirJanelaContestacao` | Dono | Ajustam parâmetros. `definirRevisor` fica só como atalho de teste. |
+| `candidatar()` / `promover(addr)` / `rebaixar(addr)` / `sair()` / `sacar()` | Qualquer pessoa (`GestaoRevisores`) | Candidatura, promoção automática, saída e saque do depósito. |
 
 \* O **site** só mostra o botão de registrar para revisores (`SO_REVISOR_REGISTRA` em `frontend/src/config.js`), mas o contrato ainda aceita registro de qualquer carteira. Veja [Limitações](#-limitações-e-riscos).
 
-**Consultas (gratuitas):** `obterRegistro` · `ehVerificado` · `ehDefinitivo` · `obterFontes` · `obterVoto` · `obterContagem` · `obterRevisores` · `revisorDesde`
+**Consultas (gratuitas):** `obterRegistro` · `ehVerificado` · `ehDefinitivo` · `obterVerificacaoIA` · `obterJuri` · `obterPapel` · `obterCompromisso` · `obterFontes` · `obterVoto` · `obterContagem` · `obterRevisores` · `obterCandidato` · `podePromover`
 
 ### Eventos (o "diário" público)
 
-`RegistroCriado` · `FonteAnexada` · `VerificacaoAberta` · `VotoRegistrado` · `Finalizado` · `SemConsenso` · `Superada` · `SuperacaoRevertida` · `Contestado` · `RevisorAlterado`
+`RegistroCriado` · `FonteAnexada` · `VerificacaoIARegistrada` · `RecursoDaIA` · `IAConfirmada` · `VerificacaoAberta` · `JuradosSorteados` · `SorteioAdiado` · `VotoSelado` · `VotoRevelado` · `FaltaDeParticipacao` · `VotoRegistrado` · `Finalizado` · `SemConsenso` · `Superada` · `SuperacaoRevertida` · `Contestado` · `RevisorAlterado` · `Candidatou` · `Promovido` · `Rebaixado` · `Multa`
 
 ---
 
@@ -337,6 +438,8 @@ Fonte
 | Site | [React](https://react.dev/) com [Vite](https://vitejs.dev/) e ethers.js 6 |
 | Carteira | MetaMask |
 | Rede de testes | Sepolia, com um provedor RPC (Alchemy) |
+| Serviço de IA | Node.js 20+, sem framework; provedores gratuitos (Groq, Gemini, OpenRouter) |
+| Evidências | Google Fact Check Tools, Wikipédia, Firecrawl (plano gratuito) |
 | Armazenamento (planejado) | IPFS com serviço de *pinning* |
 
 ---
@@ -346,28 +449,30 @@ Fonte
 ```text
 OathChain/
 ├── contracts/
-│   └── OathChain.sol            # contrato principal
+│   ├── OathChain.sol            # contrato principal (IA, júri, voto secreto)
+│   └── GestaoRevisores.sol      # candidatura, prova e promoção automática
 ├── test/
-│   └── OathChain.test.js        # 41 testes automatizados
+│   ├── OathChain.test.js        # 53 testes (regras base, contestação, IA)
+│   └── Juri.test.js             # 23 testes (sorteio, voto secreto, candidatura)
 ├── scripts/
-│   ├── deploy.js                # publica o contrato e grava o endereço
-│   ├── setup-revisores.js       # cadastra os revisores no contrato
-│   └── janelas.js               # ajusta as janelas (útil na demonstração)
-├── deployments/
-│   └── sepolia.json             # endereço do contrato publicado (público)
+│   ├── deploy.js                # publica os 2 contratos (DEMO=1 liga janelas curtas)
+│   ├── setup-revisores.js       # atalho de teste: cadastra revisores à mão
+│   └── janelas.js               # ajusta as janelas
+├── servico/                     # serviço dos 4 agentes de IA
+│   ├── src/                     # agentes, busca, relatório, chain, servidor, cli
+│   ├── test/servico.test.js     # 11 testes com servidores falsos
+│   └── .env.exemplo
+├── deployments/sepolia.json     # endereços publicados (públicos)
 ├── docs/                        # logo e imagens de apresentação
 ├── frontend/
-│   ├── index.html               # título, ícones e imagem de compartilhamento
-│   ├── public/                  # logo, símbolo e ícones do site
 │   └── src/
-│       ├── App.jsx, main.jsx    # raiz do site e navegação
-│       ├── paginas/             # Início, Estante, Verificar, Registro, Mapa, Revisores, Linha, Assuntos
-│       ├── useDados.js          # carteira, rede e leitura do contrato
-│       ├── oathchain.js         # leitura e envio de dados do contrato
-│       ├── config.js            # rede, regra de quem registra
-│       ├── deployment.json      # endereço do contrato (o deploy atualiza sozinho)
-│       └── abi.json             # descrição do contrato
-├── hardhat.config.js
+│       ├── App.jsx, main.jsx
+│       ├── paginas/             # Início, Estante, Verificar, Registro, Mapa, Revisores, SejaRevisor, Linha, Assuntos
+│       ├── paineis.jsx          # painel da IA e painel do júri
+│       ├── useDados.js, oathchain.js, config.js
+│       ├── deployment.json      # endereços + bloco (o deploy atualiza sozinho)
+│       └── abi.json, abiGestao.json
+├── hardhat.config.js            # viaIR + otimizador (o contrato passa de 22 KB)
 ├── package.json
 └── README.md
 ```
@@ -395,7 +500,7 @@ npx hardhat test
 Resultado esperado:
 
 ```text
-  41 passing
+  76 passing
 ```
 
 ### 2. Publicar na Sepolia
@@ -409,10 +514,16 @@ PRIVATE_KEY=chave_privada_da_carteira_de_testes
 
 ```bash
 npx hardhat run scripts/deploy.js --network sepolia
-npx hardhat run scripts/setup-revisores.js --network sepolia
 ```
 
-O `deploy.js` grava o endereço em `deployments/sepolia.json` e em `frontend/src/deployment.json`, e o site passa a usar o contrato novo sozinho. Edite a lista de carteiras no topo de `scripts/setup-revisores.js` para cadastrar os seus revisores.
+O `deploy.js` publica o `OathChain` e o `GestaoRevisores`, liga um ao outro e grava os endereços em `deployments/sepolia.json` e em `frontend/src/deployment.json`; o site passa a usar os contratos novos sozinho. Para uma **demonstração rápida**, publique com `DEMO=1` (janelas de minutos, depósito de 0,001 ETH, júri de 3 e prova de 2 votos):
+
+```bash
+DEMO=1 npx hardhat run scripts/deploy.js --network sepolia      # Linux e Mac
+$env:DEMO=1; npx hardhat run scripts/deploy.js --network sepolia # PowerShell
+```
+
+Revisores entram pela página **Seja revisor** (candidatura). Para o começo, quando ainda não há ninguém para compor um júri, `scripts/setup-revisores.js` cadastra revisores à mão (é só um atalho de teste).
 
 > ⚠️ Use **só uma carteira de testes**, sem dinheiro de verdade. Nunca compartilhe a chave privada nem a frase de 12 palavras.
 
@@ -425,6 +536,18 @@ npm run dev
 ```
 
 Abra o endereço que aparecer (normalmente `http://localhost:5173`). Para votar e registrar, conecte a MetaMask na rede **Sepolia** e use contas de revisor.
+
+### 4. Serviço de IA (opcional, gratuito)
+
+```bash
+cd servico
+npm install
+copy .env.exemplo .env     # Windows (use cp no Linux/Mac) e preencha as chaves
+node src/cli.js --texto "O PIB do Brasil cresceu 3% em 2024" --assunto Economia --ref 2024
+npm start                  # fica vigiando afirmações novas e registrando o veredito
+```
+
+Chaves gratuitas: **Groq** (console.groq.com) ou **Gemini** (aistudio.google.com); opcionais: **Firecrawl** e **Google Fact Check**. Crie uma **carteira nova só para o serviço**, defina o endereço dela com `AGENTE_VERIFICADOR` antes do deploy (ou `definirAgenteVerificador`) e ponha a chave dela em `PRIVATE_KEY_AGENTE`. Sem nenhuma chave de IA, o serviço roda em **modo demonstração** (respostas simuladas, e o relatório avisa).
 
 ### Demonstração com janelas curtas
 
@@ -440,18 +563,23 @@ Depois volte aos valores normais (604800 = 7 dias). Os testes automatizados, por
 
 ## 🧪 Cobertura dos testes
 
-Os **41 testes** simulam também a **passagem do tempo** (promessa vencendo, janelas fechando).
+**76 testes de contrato** (simulam também a passagem do tempo) e **11 testes do serviço de IA** (com servidores falsos, sem gastar cota).
 
 | Área | O que é verificado |
 |------|--------------------|
-| **Registro** | Afirmação e promessa; prazo no passado; critérios vazios; CID vazio; período de referência obrigatório. |
-| **Administração** | Só o dono mexe em revisores e parâmetros; contagem sem duplicar; mínimo de revisores; lista de revisores sem repetição. |
-| **Fontes** | Quem pode anexar em cada estado; registro da rodada. |
-| **Regra da maioria** | 2 de 3 bastam; 1 voto não é maioria; 1-1-1 vira `SemConsenso`; janela acabando; 4 revisores exigem 3 votos. |
-| **Quem pode votar** | Não-revisor, voto duplicado, veredito inválido, autor votando, revisor que entra depois, revisor removido. |
-| **Contestação** | Autor só 1 vez; limite de 3 rodadas; histórico preservado; nova rodada com nova "foto". |
-| **Janela de contestação** | Fecha depois de 7 dias; torna o veredito definitivo; janela "fotografada"; limite de rodadas também torna definitivo. |
-| **Substituição** | Só substitui afirmação finalizada; correção aprovada supera o antigo; rejeitada ou sem consenso não supera; correção derrubada desfaz a superação. |
+| **Registro** | Afirmação e promessa; prazo no passado; critérios vazios; período de referência obrigatório. |
+| **Administração** | Só o dono mexe em parâmetros; mínimo de revisores; lista sem repetição. |
+| **Fontes** | Quem pode anexar em cada estado. |
+| **Regra da maioria** | 2 de 3 bastam; 1-1-1 vira `SemConsenso`; janela acabando; 4 revisores exigem 3 votos. |
+| **Contestação e janela** | Autor só 1 vez; limite de 3 rodadas; janela fecha e torna definitivo; histórico preservado. |
+| **Substituição** | Correção aprovada supera o antigo; rejeitada não supera; correção derrubada desfaz a superação. |
+| **Verificação por IA** | Só o agente registra; confiança alta = provisório; baixa = júri; recurso; confirmação; correção pela IA. |
+| **Sorteio** | Só após o bloco futuro; 5 distintos; autor excluído; aprendizes observam; novo júri evita o anterior; sorteio adiado após 256 blocos; falha sem jurados suficientes. |
+| **Voto secreto** | Selar e revelar nas etapas certas; selo duplicado, voto que não confere, sem justificativa ou sem link; `votar` bloqueado; maioria sobre o tamanho do júri; voto de aprendiz não conta. |
+| **Candidatura** | Depósito; só o `OathChain` registra estatísticas; **discordar da maioria não é punido**; promoção automática; limite de crescimento; faltas, multa de 20% e expulsão; saída com reembolso. |
+| **Serviço de IA** | Regras do relator; saneamento de respostas inválidas; pipeline de 4 agentes; *prompt injection*; troca de provedor em 429; bloqueio de SSRF; hash do relatório. |
+
+O fluxo do site também foi testado de ponta a ponta em um navegador automatizado: recurso, sorteio, selar, revelar, finalizar e candidatura.
 
 ---
 
@@ -464,24 +592,25 @@ Os **41 testes** simulam também a **passagem do tempo** (promessa vencendo, jan
 - [x] Testes automatizados
 - [x] Código e README no GitHub
 
-**Semana 2: publicação e interface** 🚧
+**Semana 2: publicação e interface** ✅
 
 - [x] Publicar o contrato na testnet **Sepolia**
-- [x] Cadastrar revisores de teste
-- [x] Janela de contestação e veredito definitivo
-- [x] Correção por novo registro ("Superado") e período de referência
-- [x] Site em React ligado ao contrato (estante, mapa, revisores, linha do tempo, assuntos)
-- [x] Identidade visual (logo) e página inicial animada para quem chega pela primeira vez
-- [x] Fluxo completo testado com a MetaMask: registrar, votar, finalizar, contestar, corrigir
-- [ ] Integrar o **IPFS** (texto, metadados e fontes)
-- [ ] Reputação simples dos revisores
-- [ ] (Opcional) script de IA para sugerir fontes
+- [x] Janela de contestação, veredito definitivo e correção por novo registro ("Superado")
+- [x] Site em React ligado ao contrato, identidade visual e página inicial animada
+- [x] Fluxo completo testado com a MetaMask
 
-**Semana 3: demonstração e relatório** 📝
+**Semana 3: IA, júri e demonstração** 🚧
 
-- [ ] Demonstração com a passagem do tempo (rede local)
-- [ ] Polimento do site e vídeo
-- [ ] Relatório com governança e limitações
+- [x] Verificação híbrida: 4 agentes de IA gratuitos com relatório auditável (hash na blockchain)
+- [x] Júri sorteado (hash de bloco futuro) e voto secreto com justificativa e fonte
+- [x] Candidatura aberta com período de prova e promoção automática (sem porteiro)
+- [x] Painéis da IA, do júri e página "Seja revisor" no site
+- [ ] Publicar a v5 na Sepolia e testar o serviço com chaves reais
+- [ ] Filtro de "fato versus opinião" antes da IA
+- [ ] Teste de acurácia da IA contra afirmações já checadas por agências
+- [ ] Integrar o **IPFS** (texto, relatório e fontes)
+- [ ] Demonstração com janelas curtas e vídeo
+- [ ] Relatório com governança, ameaças e limitações
 
 ### 🔭 Visão de futuro
 
@@ -489,7 +618,37 @@ Os **41 testes** simulam também a **passagem do tempo** (promessa vencendo, jan
 - 📺 **Verificador em tempo real:** um aplicativo em cima do registro, que consulta vereditos já existentes.
 - 📚 **Arquivo permanente de fontes:** cada fonte citada é copiada e guardada de forma imutável, para o link não morrer.
 - ⚡ **Rede de camada 2:** reduz o custo por registro.
-- 🏛️ **Governança comunitária:** regras de revisão e reputação decididas de forma aberta.
+- 🪙 **Token próprio (fase 2):** veja [abaixo](#-token-próprio-fase-2).
+- 🏛️ **Governança comunitária:** regras de revisão e reputação decididas de forma aberta; o dono entrega o controle dos parâmetros a uma governança (multisig ou votação).
+
+---
+
+## 🛡️ Modelo de ameaças
+
+| Ameaça | Como é tratada |
+|--------|----------------|
+| **Muitas contas para manipular votos (sybil)** | Quem **registra** e quem **decide** são separados. Para julgar, a conta precisa passar pela prova (votos fundamentados, tempo) e pelo **freio de crescimento**; entrar custa **depósito**; o júri é **sorteado**, então comprar vários lugares não garante nenhum. Prova de humanidade (Human Passport, World ID) fica como reforço futuro: ela garante "uma pessoa, uma conta", não honestidade. |
+| **Informação falsa entra no site** | Nenhum sistema garante verdade na entrada. A IA checa as fontes, mostra o relatório e é **provisória**; humanos recorrem; o histórico nunca é apagado. |
+| **IA errada ou manipulada** | Relator em código com tetos de confiança, contraditor obrigatório, texto de páginas tratado como dado, saneamento das respostas, recurso humano. |
+| **Copiar a maioria / pressão social** | Voto secreto e nenhuma métrica de "concordância com a maioria". |
+| **Autor escolhe quem julga** | Sorteio com hash de bloco futuro; autor excluído. |
+| **Sorteado some** | Falta, multa e perda do posto. |
+| **Dono do contrato abusa** | Não cadastra revisores. Ainda ajusta parâmetros: na versão real, passaria a uma governança. |
+| **Spam de verificações esgotando a cota da IA** | Limite diário e limite por IP no serviço. |
+| **Ataque ao serviço (SSRF, injeção)** | Só `http/https`, bloqueio de endereços internos, textos de terceiros isolados. |
+
+---
+
+## 🪙 Token próprio (fase 2)
+
+Neste protótipo o depósito é em **ETH de teste**, o que é mais simples e mais seguro. Um token próprio só faria sentido numa fase seguinte, e com regras para não corromper a verificação:
+
+- **Um revisor, um voto:** o token não pode comprar mais peso de voto (senão vira "quem tem mais dinheiro decide a verdade").
+- **Reputação não transferível:** a reputação é ligada à carteira e não pode ser vendida.
+- **Recompensa por qualidade, não por concordância:** pagar por justificativa e fonte, nunca por votar com a maioria.
+- **Depósito em token** (em vez de ETH) para a candidatura, com multa por falta.
+
+Por isso o token está registrado aqui como **trabalho futuro**.
 
 ---
 
@@ -499,12 +658,17 @@ Este é um **protótipo acadêmico**. Os limites abaixo são conhecidos e fazem 
 
 | Risco | Descrição | Resposta atual ou prevista |
 |-------|-----------|----------------------------|
-| **Dado falso na entrada** | A blockchain garante que o registro não foi alterado, não que seja verdadeiro. | Provas anexadas e revisadas por pessoas. |
+| **Dado falso na entrada** | A blockchain garante que o registro não foi alterado, não que seja verdadeiro. | IA com relatório público, recurso humano e histórico imutável. |
+| **Erros da IA** | Modelos gratuitos erram, e podem ter limites de uso e dados usados pelo provedor. | Veredito provisório, recurso, tetos de confiança; teste de acurácia previsto. |
+| **Fato versus opinião** | A IA só verifica fatos checáveis. | Opinião tende a sair "Inconclusiva"; filtro previsto. |
 | **Quem decide o que é verdade** | O ponto central do projeto. | Critérios mensuráveis, vários revisores, maioria obrigatória, contestação e correção. |
 | **Verdade que muda** | Um veredito correto hoje pode estar errado depois. | Veredito datado, período de referência e registro que substitui o antigo. |
-| **Contas falsas (ataque sybil)** | Muitas contas votando em massa. | Lista fixa de revisores no protótipo; reputação e depósito em garantia previstos. |
-| **Poder do dono** | O dono escolhe os revisores e ajusta os parâmetros. | Limitação assumida; governança comunitária fica para o futuro. |
-| **Registro aberto no contrato** | O site só mostra o botão de registrar para revisores, mas o contrato aceita registro de qualquer carteira. | Decisão em aberto: exigir ser revisor também no contrato. |
+| **Contas falsas (ataque sybil)** | Muitas contas tentando entrar. | Depósito, prova, freio de crescimento e sorteio. Não é infalível: veja o [modelo de ameaças](#-modelo-de-ameaças). |
+| **Poder do dono** | O dono ajusta parâmetros e a carteira da IA. | Não escolhe revisores; governança comunitária fica para o futuro. |
+| **Serviço de IA centralizado** | Uma carteira roda a IA; se cair, afirmações ficam sem veredito provisório. | O autor pode pular a IA e ir ao júri; o relatório é verificável. |
+| **Júri pequeno** | Com poucos revisores o sorteio é pouco diverso. | O crescimento é gradual; o contrato exige jurados suficientes. |
+| **Sorteio com hash de bloco** | Um validador poderia influenciar o hash em tese. | Aceitável para uma testnet acadêmica; em produção usaria uma fonte de aleatoriedade verificável (ex.: VRF). |
+| **Registro aberto no contrato** | O site só mostra o botão de registrar para revisores, mas o contrato aceita registro de qualquer carteira. | Decisão em aberto. A IA e o limite diário reduzem o spam. |
 | **Conteúdo dentro do contrato** | Por enquanto o texto e os metadados ficam gravados no próprio contrato. | O IPFS vai guardar o conteúdo, e o contrato só o link. |
 | **Hash da fonte não conferido** | O contrato não verifica se o hash corresponde ao arquivo. | A conferência é feita por quem abre a cópia. |
 | **Conteúdo que ninguém apaga** | Um registro imutável também pode receber conteúdo ilegal ou nocivo. | Discussão obrigatória no relatório. |

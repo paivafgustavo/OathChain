@@ -1,0 +1,15 @@
+{
+  "name": "oathchain-verificador",
+  "version": "1.0.0",
+  "description": "Serviço de verificação por 4 agentes de IA (100% gratuito) para o OathChain",
+  "type": "module",
+  "scripts": {
+    "start": "node src/servidor.js",
+    "verificar": "node src/cli.js",
+    "test": "node --test test/servico.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0"
+  }
+}

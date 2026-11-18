@@ -1,5 +1,9 @@
 node_modules
 .env
+servico/node_modules/
+servico/.env
+servico/relatorios/
+servico/estado.json
 
 # Hardhat files
 /cache

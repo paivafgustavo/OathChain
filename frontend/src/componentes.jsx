@@ -4,7 +4,7 @@ import { VEREDITOS, statusDe, rotuloStatus } from "./oathchain";
 // Cores do veredito sobre o papel claro da página do registro
 export const COR_PAPEL = {
   v: "#1f7a50", f: "#b3282d", c: "#8a5d00", s: "#5d5f66",
-  x: "#4e3d82", w: "#2f6db0", r: "#6b6b75", p: "#a85a0f",
+  x: "#4e3d82", w: "#2f6db0", r: "#6b6b75", p: "#a85a0f", i: "#0f766e",
 };
 
 export const irPara = (rota) => {
