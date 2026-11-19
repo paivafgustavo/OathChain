@@ -7,7 +7,8 @@ import { BLOCO_INICIAL, CONTRACT_ADDRESS, EXPLORADOR } from "./config";
 
 // Relatório no IPFS (ipfs://CID): tenta vários gateways públicos. Qualquer um serve, porque o hash
 // do texto é conferido com o da blockchain logo depois; um gateway desonesto seria pego na hora.
-const GATEWAYS_IPFS = ["https://ipfs.io/ipfs/", "https://dweb.link/ipfs/", "https://gateway.pinata.cloud/ipfs/"];
+// A Pinata vem primeiro: é onde o serviço guarda o arquivo, então responde na hora; os outros são reserva.
+const GATEWAYS_IPFS = ["https://gateway.pinata.cloud/ipfs/", "https://ipfs.io/ipfs/", "https://dweb.link/ipfs/"];
 
 async function baixarTexto(url) {
   const urls = url.startsWith("ipfs://") ? GATEWAYS_IPFS.map((g) => g + url.slice(7)) : [url];

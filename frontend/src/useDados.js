@@ -46,9 +46,15 @@ export function useDados() {
     return new Contract(GESTAO_ADDRESS, abiGestao, await provider.getSigner());
   }, []);
 
-  const atualizar = useCallback(async () => {
-    setCarregando(true);
-    setErro("");
+  // { silencioso: true } = releitura automática em segundo plano: não mostra "carregando" nem troca a
+  // mensagem de erro por uma falha passageira de rede. (Checa "=== true" porque às vezes a função é
+  // usada direto num onClick e recebe o evento do clique como argumento.)
+  const atualizar = useCallback(async (opcoes) => {
+    const silencioso = opcoes?.silencioso === true;
+    if (!silencioso) {
+      setCarregando(true);
+      setErro("");
+    }
     try {
       const provider = criarProvider();
       const rede = await provider.getNetwork();
@@ -74,11 +80,28 @@ export function useDados() {
       setAgoraMs(Date.now());
     } catch (e) {
       console.error(e);
-      setErro("Não foi possível ler o contrato. Confira o endereço (deployment.json) e a rede.");
+      if (!silencioso) setErro("Não foi possível ler o contrato. Confira o endereço (deployment.json) e a rede.");
     } finally {
-      setCarregando(false);
+      if (!silencioso) setCarregando(false);
     }
   }, [enderecoValido]);
+
+  // Releitura automática: a blockchain muda sem o site saber (a IA grava o veredito, outros jurados votam,
+  // o serviço encerra a votação). A cada 30 s, só com a aba visível, e de novo ao voltar para a aba.
+  useEffect(() => {
+    let rodando = false;
+    const reler = async () => {
+      if (rodando || document.visibilityState !== "visible") return;
+      rodando = true;
+      try { await atualizar({ silencioso: true }); } finally { rodando = false; }
+    };
+    const t = setInterval(reler, 30000);
+    document.addEventListener("visibilitychange", reler);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", reler);
+    };
+  }, [atualizar]);
 
   async function conectar() {
     setErro("");
