@@ -1,0 +1,20 @@
+{
+  "comoUsar": "Cada item tem o veredito já conhecido em 'esperado' (Verdadeira, Falsa, Inconclusiva, opiniao ou previsao). Estes itens iniciais são fatos de conhecimento público com fonte oficial, para testar o pipeline; NÃO foram checados por agências. Para o teste valer de verdade, acrescente afirmações checadas por agências (Lupa, Aos Fatos, Comprova, Estadão Verifica), preenchendo 'agencia' e 'link' com a checagem original. Use o veredito da agência: 'Verdadeiro' -> Verdadeira; 'Falso' -> Falsa; 'Exagerado', 'Insustentável' ou 'Contraditório' -> Inconclusiva.",
+  "afirmacoes": [
+    { "texto": "O Brasil tem 26 estados e um Distrito Federal.", "referencia": "2025", "assunto": "Política", "esperado": "Verdadeira", "fonte": "IBGE", "agencia": null, "link": null },
+    { "texto": "Brasília é a capital do Brasil desde 1960.", "referencia": "2025", "assunto": "Política", "esperado": "Verdadeira", "fonte": "IBGE / Governo do Distrito Federal", "agencia": null, "link": null },
+    { "texto": "O Censo 2022 do IBGE contou cerca de 203 milhões de habitantes no Brasil.", "referencia": "2022", "assunto": "Geral", "esperado": "Verdadeira", "fonte": "IBGE, Censo 2022", "agencia": null, "link": null },
+    { "texto": "Segundo o Censo 2022, São Paulo é o estado mais populoso do Brasil.", "referencia": "2022", "assunto": "Geral", "esperado": "Verdadeira", "fonte": "IBGE, Censo 2022", "agencia": null, "link": null },
+    { "texto": "O real substituiu o cruzeiro real como moeda do Brasil em 1994.", "referencia": "1994", "assunto": "Economia", "esperado": "Verdadeira", "fonte": "Banco Central do Brasil", "agencia": null, "link": null },
+    { "texto": "A seleção brasileira masculina de futebol venceu a Copa do Mundo 5 vezes.", "referencia": "2025", "assunto": "Geral", "esperado": "Verdadeira", "fonte": "FIFA", "agencia": null, "link": null },
+    { "texto": "O Brasil é o maior país da América do Sul em área territorial.", "referencia": "2025", "assunto": "Geral", "esperado": "Verdadeira", "fonte": "IBGE", "agencia": null, "link": null },
+    { "texto": "A capital do Brasil é o Rio de Janeiro.", "referencia": "2025", "assunto": "Política", "esperado": "Falsa", "fonte": "Constituição Federal, art. 18", "agencia": null, "link": null },
+    { "texto": "A Amazônia Legal ocupa menos de 10% do território brasileiro.", "referencia": "2025", "assunto": "Meio_Ambiente", "esperado": "Falsa", "fonte": "IBGE (cerca de 59% do território)", "agencia": null, "link": null },
+    { "texto": "No Brasil, o voto é facultativo para todos os cidadãos entre 18 e 70 anos.", "referencia": "2025", "assunto": "Política", "esperado": "Falsa", "fonte": "Constituição Federal, art. 14 (voto obrigatório)", "agencia": null, "link": null },
+    { "texto": "O rio Amazonas deságua no oceano Pacífico.", "referencia": "2025", "assunto": "Meio_Ambiente", "esperado": "Falsa", "fonte": "IBGE / ANA (deságua no Atlântico)", "agencia": null, "link": null },
+    { "texto": "Vacinas causam autismo em crianças.", "referencia": "2025", "assunto": "Saúde", "esperado": "Falsa", "fonte": "OMS / Ministério da Saúde", "agencia": null, "link": null },
+    { "texto": "Eu acho que este é o melhor governo da história do país.", "referencia": "2025", "assunto": "Política", "esperado": "opiniao", "fonte": null, "agencia": null, "link": null },
+    { "texto": "Brasília é a cidade mais bonita do Brasil.", "referencia": "2025", "assunto": "Geral", "esperado": "opiniao", "fonte": null, "agencia": null, "link": null },
+    { "texto": "A seleção brasileira vai ganhar a próxima Copa do Mundo.", "referencia": "2026", "assunto": "Geral", "esperado": "previsao", "fonte": null, "agencia": null, "link": null }
+  ]
+}

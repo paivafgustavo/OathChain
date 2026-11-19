@@ -21,8 +21,13 @@ export const config = {
   chaveAgente: e.PRIVATE_KEY_AGENTE || "",
   limiteDiario: num(e.LIMITE_DIARIO, 50),
   intervalo: num(e.INTERVALO_SEGUNDOS, 30),
-  porta: num(e.PORTA, 8787),
-  urlPublica: (e.URL_PUBLICA || `http://localhost:${num(e.PORTA, 8787)}`).replace(/\/$/, ""),
+  // PORT: variável que Render, Railway e Fly usam para dizer em que porta o serviço deve escutar
+  // (a da plataforma tem prioridade sobre a do .env)
+  porta: num(e.PORT, num(e.PORTA, 8787)),
+  urlPublica: (e.URL_PUBLICA || `http://localhost:${num(e.PORT, num(e.PORTA, 8787))}`).replace(/\/$/, ""),
+  // IPFS (opcional): com PINATA_JWT o relatório vai para o IPFS e a blockchain guarda "ipfs://CID"
+  pinataJwt: e.PINATA_JWT || "",
+  pinataBase: e.PINATA_BASE || "https://api.pinata.cloud",
   pastaRelatorios: e.PASTA_RELATORIOS || "relatorios",
   arquivoEstado: e.ARQUIVO_ESTADO || "estado.json",
 };

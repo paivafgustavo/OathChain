@@ -5,6 +5,25 @@ import { Aviso } from "./componentes";
 import { VEREDITOS, abreviar, executar, formatarData, mensagemDeErro, restante } from "./oathchain";
 import { BLOCO_INICIAL, CONTRACT_ADDRESS, EXPLORADOR } from "./config";
 
+// Relatório no IPFS (ipfs://CID): tenta vários gateways públicos. Qualquer um serve, porque o hash
+// do texto é conferido com o da blockchain logo depois; um gateway desonesto seria pego na hora.
+const GATEWAYS_IPFS = ["https://ipfs.io/ipfs/", "https://dweb.link/ipfs/", "https://gateway.pinata.cloud/ipfs/"];
+
+async function baixarTexto(url) {
+  const urls = url.startsWith("ipfs://") ? GATEWAYS_IPFS.map((g) => g + url.slice(7)) : [url];
+  let ultimoErro;
+  for (const u of urls) {
+    try {
+      const resp = await fetch(u, { signal: AbortSignal.timeout(15000) });
+      if (resp.ok) return await resp.text();
+      ultimoErro = new Error("O servidor respondeu " + resp.status);
+    } catch (e) {
+      ultimoErro = e;
+    }
+  }
+  throw ultimoErro;
+}
+
 const NOMES_AGENTES = { "Avaliador de fontes": "🔎 Avaliador de fontes", Analista: "🧠 Analista", Contraditor: "⚖️ Contraditor" };
 
 // ---------------------------------------------------------------
@@ -22,9 +41,7 @@ export function PainelIA({ r, d }) {
   async function baixar() {
     setFalha("");
     try {
-      const resp = await fetch(ia.urlRelatorio);
-      if (!resp.ok) throw new Error("O serviço respondeu " + resp.status);
-      const texto = await resp.text();
+      const texto = await baixarTexto(ia.urlRelatorio);
       // Prova de que o relatório não foi alterado: o hash do texto precisa ser igual ao gravado na blockchain
       const confere = keccak256(toUtf8Bytes(texto)) === ia.hashRelatorio;
       setRel({ texto, dados: JSON.parse(texto), confere });
@@ -124,6 +141,12 @@ export function PainelIA({ r, d }) {
               : "✖ ATENÇÃO: o texto baixado NÃO bate com o hash da blockchain. Não confie neste relatório."}
           </Aviso>
           {rel.dados.simulado && <Aviso>Este relatório foi gerado em MODO DEMONSTRAÇÃO (respostas simuladas).</Aviso>}
+          {rel.dados.filtro && !rel.dados.filtro.verificavel && (
+            <Aviso>
+              🧹 O filtro de fato vs. opinião classificou o texto como <b>{rel.dados.filtro.tipo === "previsao" ? "previsão" : "opinião"}</b>
+              {" "}({rel.dados.filtro.motivos.join("; ")}). Os agentes não foram chamados e a decisão fica com o júri humano.
+            </Aviso>
+          )}
           <h4>Como cada agente votou</h4>
           <ul className="agentes">
             {rel.dados.resultado.votos.map((v) => (

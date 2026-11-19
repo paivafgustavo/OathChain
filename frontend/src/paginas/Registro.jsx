@@ -64,7 +64,7 @@ export default function Registro({ d, id }) {
   let chip = "";
   if (r.estado === 2) chip = def ? "Definitivo" : `Em contestação · faltam ${restante(r.fimContestacao, agora)}`;
   else if (r.estado === 4) chip = r.ia && agora < r.ia.fimRevisao ? `Janela de recurso · faltam ${restante(r.ia.fimRevisao, agora)}` : "Pode ser confirmado";
-  else if (r.estado === 1) chip = r.fimVotacao ? `Votação até ${formatarData(r.fimVotacao)}` : "Aguardando o sorteio do júri";
+  else if (r.estado === 1) chip = todosRevelaram ? "Todos votaram · encerrando" : r.fimVotacao ? `Votação até ${formatarData(r.fimVotacao)}` : "Aguardando o sorteio do júri";
   else if (r.estado === 0) chip = r.tipo === 1 && !prazoVenceu ? `Prazo em ${formatarData(r.prazo)}` : "Aguardando abertura da verificação";
   else chip = "Encerrado sem veredito";
 

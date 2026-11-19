@@ -11,6 +11,22 @@ const REVISORES = [
   { nome: "Revisor 5", endereco: "0x9eB56B4CB42a5A66d5A2b3B6881109f97c12c76c" },
 ];
 
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// A Alchemy limita transações pendentes de contas com delegação (EIP-7702): espera e tenta de novo.
+async function tentar(fn) {
+  for (let i = 0; i < 12; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (!/in-flight|replacement transaction|nonce too low|other side closed|socket|ECONNRESET|ETIMEDOUT|fetch failed|timeout|429|502|503|504/i.test(String(e.message) + String(e.code || ""))) throw e;
+      console.log("Aguardando a transação anterior confirmar... (tentativa " + (i + 1) + ")");
+      await dormir(15000);
+    }
+  }
+  throw new Error("A rede não liberou novas transações. Tente de novo em alguns minutos.");
+}
+
 // O endereço do contrato vem do .env (CONTRACT_ADDRESS) ou de deployments/<rede>.json
 function lerEnderecoDoContrato() {
   // 1) o endereço salvo pelo deploy.js (sempre o mais recente)
@@ -36,13 +52,14 @@ async function main() {
 
   for (const r of REVISORES) {
     const addr = hre.ethers.getAddress(r.endereco); // confere se o endereço é válido
-    if (await oathChain.ehRevisor(addr)) {
-      console.log(r.nome, "já estava cadastrado, pulando.");
-      continue;
-    }
-    const tx = await oathChain.definirRevisor(addr, true);
-    await tx.wait();
-    console.log(r.nome, "cadastrado:", addr);
+    // confere de novo a cada tentativa: se a rede caiu depois de a transação passar, não reenvia
+    const jaEstava = await tentar(async () => {
+      if (await oathChain.ehRevisor(addr)) return true;
+      await (await oathChain.definirRevisor(addr, true)).wait();
+      return false;
+    });
+    console.log(r.nome, jaEstava ? "já estava cadastrado, pulando." : "cadastrado: " + addr);
+    if (!jaEstava) await dormir(5000); // folga entre transações
   }
 
   const ativos = await oathChain.revisoresAtivos();

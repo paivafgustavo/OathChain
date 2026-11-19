@@ -1,4 +1,5 @@
 import http from "node:http";
+import { pathToFileURL } from "node:url";
 import { config, modoDemo, temChaveDeIA } from "./config.js";
 import { rodarUmaVez, lerEstado, dentroDoLimite } from "./processador.js";
 import { lerRelatorio } from "./relatorio.js";
@@ -49,7 +50,9 @@ export function criarServidor() {
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// pathToFileURL: no Windows o caminho tem "\", "C:" e espaços; comparar com "file://" + argv nunca batia
+// e o `npm start` saía sem rodar nada.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   criarServidor().listen(config.porta, () => console.log(`Serviço no ar: http://localhost:${config.porta} (${modoDemo() ? "MODO DEMONSTRAÇÃO" : "IA real"})`));
   const ciclo = async () => { try { await rodarUmaVez(); } catch (e) { console.error("Ciclo falhou:", e.message); } };
   ciclo();

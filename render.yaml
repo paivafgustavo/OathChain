@@ -1,0 +1,42 @@
+# Blueprint do Render (render.com): hospeda o serviço de IA de graça.
+# No painel do Render: New > Blueprint > escolha este repositório. Depois preencha as chaves pedidas
+# (as marcadas com sync: false NUNCA ficam no GitHub: você digita no painel).
+services:
+  - type: web
+    name: oathchain-ia
+    runtime: node
+    plan: free
+    rootDir: servico
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /saude
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # IA (basta uma; com mais de uma o serviço troca quando uma atinge o limite)
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      # Evidências (opcionais)
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: FACTCHECK_API_KEY
+        sync: false
+      # IPFS: ESSENCIAL no plano grátis, porque o disco do Render é apagado a cada reinício
+      - key: PINATA_JWT
+        sync: false
+      # Blockchain
+      - key: RPC_URL
+        sync: false
+      - key: CONTRACT_ADDRESS
+        value: "0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2"
+      - key: PRIVATE_KEY_AGENTE
+        sync: false
+      # O endereço que o Render der ao serviço (ex.: https://oathchain-ia.onrender.com)
+      - key: URL_PUBLICA
+        sync: false
+      - key: LIMITE_DIARIO
+        value: "50"

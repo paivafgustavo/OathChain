@@ -3,12 +3,28 @@ const fs = require("fs");
 const path = require("path");
 
 // ============================================================
-// EDITE AQUI (valores em SEGUNDOS) e rode o script.
-//   Normal:        votação 604800 (7 dias)  | contestação 604800 (7 dias)
-//   Demonstração:  votação 600 (10 min)     | contestação 300 (5 min)
+// Muda os prazos do contrato (em SEGUNDOS). Vale para as PRÓXIMAS rodadas.
+//   Normal:        npx hardhat run scripts/janelas.js --network sepolia
+//   Demonstração:  $env:DEMO=1; npx hardhat run scripts/janelas.js --network sepolia
+//                  (depois: Remove-Item Env:DEMO)
 // ============================================================
-const JANELA_VOTACAO = 604800;
-const JANELA_CONTESTACAO = 604800;
+const PRAZOS = {
+  normal: { votacao: 604800, contestacao: 604800, revisaoIA: 259200 }, // 7 dias | 7 dias | 3 dias
+  demo: { votacao: 1200, contestacao: 300, revisaoIA: 300 }, //            20 min | 5 min  | 5 min
+};
+const modo = process.env.DEMO === "1" ? "demo" : "normal";
+
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+async function tentar(fn) {
+  for (let i = 0; i < 12; i++) {
+    try { return await fn(); } catch (e) {
+      if (!/in-flight|replacement transaction|nonce too low|other side closed|socket|ECONNRESET|ETIMEDOUT|fetch failed|timeout|429|502|503|504/i.test(String(e.message) + String(e.code || ""))) throw e;
+      console.log("Rede ocupada, tentando de novo em 15 s... (" + (i + 1) + ")");
+      await dormir(15000);
+    }
+  }
+  throw new Error("A rede não liberou a transação. Tente de novo em alguns minutos.");
+}
 
 function lerEnderecoDoContrato() {
   // 1) o endereço salvo pelo deploy.js (sempre o mais recente)
@@ -28,14 +44,22 @@ async function main() {
     throw new Error("Esta conta não é a dona do contrato.");
   }
 
-  console.log("Janela de votação atual:", (await oathChain.janelaVotacao()).toString(), "s");
-  console.log("Janela de contestação atual:", (await oathChain.janelaContestacao()).toString(), "s");
-
-  await (await oathChain.definirJanelaVotacao(JANELA_VOTACAO)).wait();
-  await (await oathChain.definirJanelaContestacao(JANELA_CONTESTACAO)).wait();
-
-  console.log("Nova janela de votação:", (await oathChain.janelaVotacao()).toString(), "s");
-  console.log("Nova janela de contestação:", (await oathChain.janelaContestacao()).toString(), "s");
+  const alvo = PRAZOS[modo];
+  console.log(`Modo: ${modo === "demo" ? "DEMONSTRAÇÃO (prazos curtos)" : "normal"}`);
+  // [nome, leitura, escrita, valor desejado]
+  const janelas = [
+    ["votação", "janelaVotacao", "definirJanelaVotacao", alvo.votacao],
+    ["contestação", "janelaContestacao", "definirJanelaContestacao", alvo.contestacao],
+    ["recurso da IA", "janelaRevisaoIA", "definirJanelaRevisaoIA", alvo.revisaoIA],
+  ];
+  for (const [nome, ler, escrever, valor] of janelas) {
+    // confere antes de cada tentativa: se a transação já passou, não reenvia
+    await tentar(async () => {
+      if (Number(await oathChain[ler]()) === valor) return;
+      await (await oathChain[escrever](valor)).wait();
+    });
+    console.log(`Janela de ${nome}: ${valor} s`);
+  }
   console.log("Vale para as próximas rodadas e vereditos (os já existentes não mudam).");
 }
 

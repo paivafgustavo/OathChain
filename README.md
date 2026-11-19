@@ -208,7 +208,7 @@ No site, o "sal" é derivado de uma assinatura da MetaMask: se a pessoa fechar a
 
 ## 🎓 Revisores sem porteiro: candidatura e prova
 
-Ninguém precisa pedir a uma pessoa para virar revisor, e o dono do contrato **não cadastra** ninguém. O contrato `GestaoRevisores` cuida de tudo:
+Ninguém precisa pedir a uma pessoa para virar revisor: o caminho normal é a candidatura, e o contrato `GestaoRevisores` cuida de tudo. (Transparência: o dono ainda tem a função `definirRevisor`, usada só para cadastrar os primeiros revisores de teste com `setup-revisores.js`; numa versão real ela seria removida ou entregue a uma governança. Veja [Limitações](#-limitações-e-riscos).)
 
 ```mermaid
 flowchart LR
@@ -453,17 +453,25 @@ OathChain/
 │   └── GestaoRevisores.sol      # candidatura, prova e promoção automática
 ├── test/
 │   ├── OathChain.test.js        # 53 testes (regras base, contestação, IA)
-│   └── Juri.test.js             # 23 testes (sorteio, voto secreto, candidatura)
+│   └── Juri.test.js             # 30 testes (sorteio, voto aberto e secreto, candidatura)
 ├── scripts/
 │   ├── deploy.js                # publica os 2 contratos (DEMO=1 liga janelas curtas)
+│   ├── autorizar-agente.js      # autoriza a carteira do serviço de IA no contrato já publicado
+│   ├── verificar.js             # verifica os 2 contratos no Etherscan
 │   ├── setup-revisores.js       # atalho de teste: cadastra revisores à mão
-│   └── janelas.js               # ajusta as janelas
+│   └── janelas.js               # ajusta as 3 janelas (DEMO=1 = prazos curtos)
 ├── servico/                     # serviço dos 4 agentes de IA
-│   ├── src/                     # agentes, busca, relatório, chain, servidor, cli
-│   ├── test/servico.test.js     # 11 testes com servidores falsos
+│   ├── src/                     # filtro, agentes, busca, relatório (+IPFS), chain, servidor, cli,
+│   │                            #   diagnostico e acuracia
+│   ├── dados/acuracia.json      # afirmações com veredito conhecido (teste de acurácia)
+│   ├── test/                    # 29 testes com servidores falsos
 │   └── .env.exemplo
 ├── deployments/sepolia.json     # endereços publicados (públicos)
-├── docs/                        # logo e imagens de apresentação
+├── docs/
+│   ├── RELATORIO.md             # relatório final (governança, ameaças, limitações, resultados)
+│   ├── HOSPEDAGEM.md            # passo a passo: Vercel, Render, Pinata, Etherscan
+│   └── ROTEIRO-DEMO.md          # roteiro do vídeo de demonstração
+├── render.yaml                  # hospedagem do serviço de IA no Render (sem segredos)
 ├── frontend/
 │   └── src/
 │       ├── App.jsx, main.jsx
@@ -544,26 +552,30 @@ cd servico
 npm install
 copy .env.exemplo .env     # Windows (use cp no Linux/Mac) e preencha as chaves
 node src/cli.js --texto "O PIB do Brasil cresceu 3% em 2024" --assunto Economia --ref 2024
+npm run diagnostico        # confere .env, contrato, autorização do agente e saldo (não mostra chaves)
 npm start                  # fica vigiando afirmações novas e registrando o veredito
+npm run acuracia -- --max 5   # mede a acurácia contra afirmações com veredito conhecido
 ```
+
+Para autorizar a carteira do serviço num contrato já publicado: ponha o endereço público dela em `AGENTE_VERIFICADOR` no `.env` da raiz e rode `npx hardhat run scripts/autorizar-agente.js --network sepolia`. Com `PINATA_JWT` no `servico/.env`, os relatórios também vão para o **IPFS** (a blockchain guarda `ipfs://CID`).
 
 Chaves gratuitas: **Groq** (console.groq.com) ou **Gemini** (aistudio.google.com); opcionais: **Firecrawl** e **Google Fact Check**. Crie uma **carteira nova só para o serviço**, defina o endereço dela com `AGENTE_VERIFICADOR` antes do deploy (ou `definirAgenteVerificador`) e ponha a chave dela em `PRIVATE_KEY_AGENTE`. Sem nenhuma chave de IA, o serviço roda em **modo demonstração** (respostas simuladas, e o relatório avisa).
 
 ### Demonstração com janelas curtas
 
-Na Sepolia o tempo não pode ser acelerado. Para mostrar uma janela fechando ao vivo, edite os valores (em segundos) no topo de `scripts/janelas.js`, por exemplo 600 para votação e 300 para contestação, e rode:
+Na Sepolia o tempo não pode ser acelerado. Para mostrar uma janela fechando ao vivo, ligue os prazos curtos (votação 20 min, contestação 5 min, recurso da IA 5 min) **antes** de registrar:
 
-```bash
-npx hardhat run scripts/janelas.js --network sepolia
+```powershell
+$env:DEMO=1; npx hardhat run scripts/janelas.js --network sepolia; Remove-Item Env:DEMO
 ```
 
-Depois volte aos valores normais (604800 = 7 dias). Os testes automatizados, por outro lado, simulam a passagem do tempo com os recursos do Hardhat.
+Depois rode o mesmo comando sem `DEMO` para voltar ao normal (7 dias / 7 dias / 3 dias). O passo a passo do vídeo está em [docs/ROTEIRO-DEMO.md](docs/ROTEIRO-DEMO.md). Os testes automatizados, por outro lado, simulam a passagem do tempo com os recursos do Hardhat.
 
 ---
 
 ## 🧪 Cobertura dos testes
 
-**76 testes de contrato** (simulam também a passagem do tempo) e **11 testes do serviço de IA** (com servidores falsos, sem gastar cota).
+**83 testes de contrato** (simulam também a passagem do tempo) e **29 testes do serviço de IA** (com servidores falsos, sem gastar cota), incluindo o filtro de fato vs. opinião, as métricas de acurácia e o envio ao IPFS.
 
 | Área | O que é verificado |
 |------|--------------------|
@@ -605,12 +617,18 @@ O fluxo do site também foi testado de ponta a ponta em um navegador automatizad
 - [x] Júri sorteado (hash de bloco futuro) e voto secreto com justificativa e fonte
 - [x] Candidatura aberta com período de prova e promoção automática (sem porteiro)
 - [x] Painéis da IA, do júri e página "Seja revisor" no site
-- [ ] Publicar a v5 na Sepolia e testar o serviço com chaves reais
-- [ ] Filtro de "fato versus opinião" antes da IA
-- [ ] Teste de acurácia da IA contra afirmações já checadas por agências
-- [ ] Integrar o **IPFS** (texto, relatório e fontes)
-- [ ] Demonstração com janelas curtas e vídeo
-- [ ] Relatório com governança, ameaças e limitações
+- [x] Publicar a v5 na Sepolia
+- [x] Filtro de "fato versus opinião" antes da IA
+- [x] Ferramenta de teste de acurácia da IA (`npm run acuracia`)
+- [x] **IPFS** para os relatórios da IA (com as fontes consultadas), opcional via Pinata
+- [x] Diagnóstico do serviço e script para autorizar o agente sem novo deploy
+- [x] Roteiro da demonstração com janelas curtas ([docs/ROTEIRO-DEMO.md](docs/ROTEIRO-DEMO.md))
+- [x] Serviço testado com chaves reais na Sepolia (IA → júri → encerramento automático)
+- [x] Relatório final ([docs/RELATORIO.md](docs/RELATORIO.md)) e guia de publicação ([docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md))
+- [ ] Publicar site (Vercel) e serviço (Render), verificar contratos no Etherscan
+- [ ] Completar o teste de acurácia e acrescentar afirmações checadas por agências
+- [ ] IPFS também para o texto dos registros (hoje fica no contrato)
+- [ ] Gravar o vídeo
 
 ### 🔭 Visão de futuro
 
@@ -630,10 +648,10 @@ O fluxo do site também foi testado de ponta a ponta em um navegador automatizad
 | **Muitas contas para manipular votos (sybil)** | Quem **registra** e quem **decide** são separados. Para julgar, a conta precisa passar pela prova (votos fundamentados, tempo) e pelo **freio de crescimento**; entrar custa **depósito**; o júri é **sorteado**, então comprar vários lugares não garante nenhum. Prova de humanidade (Human Passport, World ID) fica como reforço futuro: ela garante "uma pessoa, uma conta", não honestidade. |
 | **Informação falsa entra no site** | Nenhum sistema garante verdade na entrada. A IA checa as fontes, mostra o relatório e é **provisória**; humanos recorrem; o histórico nunca é apagado. |
 | **IA errada ou manipulada** | Relator em código com tetos de confiança, contraditor obrigatório, texto de páginas tratado como dado, saneamento das respostas, recurso humano. |
-| **Copiar a maioria / pressão social** | Voto secreto e nenhuma métrica de "concordância com a maioria". |
+| **Copiar a maioria / pressão social** | Justificativa e fonte obrigatórias em cada voto, nenhuma métrica de "concordância com a maioria" e aprendizes livres para discordar. O voto secreto (commit-reveal) existe no contrato e pode ser ligado com `definirJuri(..., true)`. |
 | **Autor escolhe quem julga** | Sorteio com hash de bloco futuro; autor excluído. |
 | **Sorteado some** | Falta, multa e perda do posto. |
-| **Dono do contrato abusa** | Não cadastra revisores. Ainda ajusta parâmetros: na versão real, passaria a uma governança. |
+| **Dono do contrato abusa** | Não escolhe o júri nem vota. Mas ainda pode cadastrar/remover revisores (`definirRevisor`, porta de teste), trocar o contrato de gestão, escolher a carteira da IA e ajustar parâmetros. Tudo fica registrado em eventos públicos; na versão real, esses poderes passariam a uma governança (multisig ou votação). |
 | **Spam de verificações esgotando a cota da IA** | Limite diário e limite por IP no serviço. |
 | **Ataque ao serviço (SSRF, injeção)** | Só `http/https`, bloqueio de endereços internos, textos de terceiros isolados. |
 
@@ -659,17 +677,18 @@ Este é um **protótipo acadêmico**. Os limites abaixo são conhecidos e fazem 
 | Risco | Descrição | Resposta atual ou prevista |
 |-------|-----------|----------------------------|
 | **Dado falso na entrada** | A blockchain garante que o registro não foi alterado, não que seja verdadeiro. | IA com relatório público, recurso humano e histórico imutável. |
-| **Erros da IA** | Modelos gratuitos erram, e podem ter limites de uso e dados usados pelo provedor. | Veredito provisório, recurso, tetos de confiança; teste de acurácia previsto. |
-| **Fato versus opinião** | A IA só verifica fatos checáveis. | Opinião tende a sair "Inconclusiva"; filtro previsto. |
+| **Erros da IA** | Modelos gratuitos erram, e podem ter limites de uso e dados usados pelo provedor. | Veredito provisório, recurso, tetos de confiança e teste de acurácia (`npm run acuracia`). |
+| **Fato versus opinião** | A IA só verifica fatos checáveis. | Filtro antes da IA: opinião e previsão vão direto ao júri como "Inconclusiva", com o motivo no relatório. |
 | **Quem decide o que é verdade** | O ponto central do projeto. | Critérios mensuráveis, vários revisores, maioria obrigatória, contestação e correção. |
 | **Verdade que muda** | Um veredito correto hoje pode estar errado depois. | Veredito datado, período de referência e registro que substitui o antigo. |
 | **Contas falsas (ataque sybil)** | Muitas contas tentando entrar. | Depósito, prova, freio de crescimento e sorteio. Não é infalível: veja o [modelo de ameaças](#-modelo-de-ameaças). |
-| **Poder do dono** | O dono ajusta parâmetros e a carteira da IA. | Não escolhe revisores; governança comunitária fica para o futuro. |
-| **Serviço de IA centralizado** | Uma carteira roda a IA; se cair, afirmações ficam sem veredito provisório. | O autor pode pular a IA e ir ao júri; o relatório é verificável. |
+| **Poder do dono** | O dono ajusta parâmetros, a carteira da IA e o contrato de gestão, e ainda pode cadastrar revisores à mão (`definirRevisor`). | Ações registradas em eventos públicos; remover a porta de teste e passar os poderes a uma governança fica para a versão real. |
+| **Serviço de IA centralizado** | Uma carteira roda a IA; se cair, afirmações ficam sem veredito provisório. | O autor pode pular a IA e ir ao júri; o relatório é verificável. Sem resposta da IA (cota esgotada), o serviço não grava nada em vez de gravar um veredito falso. |
+| **Cotas gratuitas de IA** | Os planos grátis limitam chamadas por minuto e por dia (cerca de 5 a 10 verificações por dia no Gemini). | Troca automática de provedor, espera no limite por minuto, limite diário no serviço. |
 | **Júri pequeno** | Com poucos revisores o sorteio é pouco diverso. | O crescimento é gradual; o contrato exige jurados suficientes. |
 | **Sorteio com hash de bloco** | Um validador poderia influenciar o hash em tese. | Aceitável para uma testnet acadêmica; em produção usaria uma fonte de aleatoriedade verificável (ex.: VRF). |
 | **Registro aberto no contrato** | O site só mostra o botão de registrar para revisores, mas o contrato aceita registro de qualquer carteira. | Decisão em aberto. A IA e o limite diário reduzem o spam. |
-| **Conteúdo dentro do contrato** | Por enquanto o texto e os metadados ficam gravados no próprio contrato. | O IPFS vai guardar o conteúdo, e o contrato só o link. |
+| **Conteúdo dentro do contrato** | O texto e os metadados dos registros ficam gravados no próprio contrato (os relatórios da IA já podem ir para o IPFS). | Levar também o texto dos registros para o IPFS, com o contrato guardando só o CID. |
 | **Hash da fonte não conferido** | O contrato não verifica se o hash corresponde ao arquivo. | A conferência é feita por quem abre a cópia. |
 | **Conteúdo que ninguém apaga** | Um registro imutável também pode receber conteúdo ilegal ou nocivo. | Discussão obrigatória no relatório. |
 | **Difamação e questões legais** | Emitir veredito sobre pessoas reais é sensível. | Na demonstração, só afirmações fictícias ou documentadas publicamente. |

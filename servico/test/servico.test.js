@@ -14,6 +14,11 @@ const servidor = http.createServer(async (req, res) => {
     const prov = url.pathname.split("/")[1];
     chamadas.porProvedor[prov] = (chamadas.porProvedor[prov] || 0) + 1;
     if (prov === "limitado") return j({ erro: "rate" }, 429);
+    // limite POR MINUTO: na 1ª vez pede para esperar 0,2 s, na 2ª responde
+    if (prov === "espera" && chamadas.porProvedor.espera === 1) {
+      res.writeHead(429, { "Content-Type": "application/json", "Retry-After": "0.2" });
+      return res.end(JSON.stringify({ error: { message: "Rate limit reached. Please try again in 0.2s" } }));
+    }
     const msg = JSON.parse(corpo).messages;
     chamadas.chat.push(msg);
     const sis = msg[0].content;
@@ -33,6 +38,11 @@ const servidor = http.createServer(async (req, res) => {
   if (url.pathname.endsWith("/search")) {
     return j({ data: [{ url: "https://www.ibge.gov.br/pib", title: "IBGE: PIB 2024", markdown: "O PIB cresceu 3,4% em 2024." }, { url: "http://localhost:9/interno", title: "interno", markdown: "x" }] });
   }
+  if (url.pathname === "/pinning/pinFileToIPFS") {
+    chamadas.pinata = { auth: req.headers.authorization, corpo };
+    if (req.headers.authorization !== "Bearer jwt-teste") return j({ erro: "nao autorizado" }, 401);
+    return j({ IpfsHash: "bafkreigh2akiscaildcqabsyg3dfr6chu3fgpregiymsck7e7aqa4s52zy" });
+  }
   if (url.pathname.includes("claims:search")) {
     return j({ claims: [{ text: "PIB cresceu 3%", claimReview: [{ publisher: { name: "Agência X" }, url: "https://agenciax.com/c1", title: "Verdade", textualRating: "Verdadeiro" }] }] });
   }
@@ -47,6 +57,9 @@ before(async () => {
   Object.assign(process.env, {
     GROQ_API_KEY: "k1", GROQ_BASE: `${b}/groq`, FIRECRAWL_API_KEY: "fc", FIRECRAWL_BASE: b,
     FACTCHECK_API_KEY: "fk", FACTCHECK_BASE: b, WIKIPEDIA_BASE: `${b}/w/api.php`, PASTA_RELATORIOS: "/tmp/rel-teste",
+    // o config.js carrega o servico/.env real: sem isto, as chaves verdadeiras de Gemini/OpenRouter/Pinata
+    // entravam no teste, que passava a chamar as APIs de verdade (lento e gastando cota)
+    GEMINI_API_KEY: "", OPENROUTER_API_KEY: "", PINATA_JWT: "",
   });
   delete process.env.DEMO;
   agentes = await import("../src/agentes.js");
@@ -167,4 +180,61 @@ test("relatório: o hash on-chain confere com o texto guardado", () => {
 test("modo demonstração funciona offline e avisa que é simulado", async () => {
   const r = await agentes.verificarAfirmacao({ texto: "Afirmação de teste sobre economia", assunto: "Economia", referencia: "2025" }, { demo: true });
   assert.equal(r.simulado, true);
+});
+
+test("IPFS: com PINATA_JWT o relatório vai para o IPFS e a URL vira ipfs://CID; se falhar, usa a URL do serviço", async () => {
+  const { config } = await import("../src/config.js");
+  const rel = relatorio.montarRelatorio({ registro: { id: 9, texto: "x" }, analise: { simulado: true, resultado: { veredito: "Verdadeira", confianca: 80 } } });
+  const antes = { jwt: config.pinataJwt, base: config.pinataBase };
+  try {
+    config.pinataBase = `http://127.0.0.1:${porta}`;
+    config.pinataJwt = "jwt-teste";
+    const url = await relatorio.publicarRelatorio(rel);
+    assert.equal(url, "ipfs://bafkreigh2akiscaildcqabsyg3dfr6chu3fgpregiymsck7e7aqa4s52zy");
+    assert.ok(chamadas.pinata.corpo.includes(rel.texto), "o texto EXATO foi enviado (o hash precisa conferir)");
+    config.pinataJwt = "jwt-errado";
+    const avisos = [];
+    const reserva = await relatorio.publicarRelatorio(rel, (m) => avisos.push(m));
+    assert.match(reserva, /\/relatorios\/0x[0-9a-f]{64}\.json$/);
+    assert.match(avisos[0], /IPFS falhou/);
+  } finally {
+    config.pinataJwt = antes.jwt;
+    config.pinataBase = antes.base;
+  }
+});
+
+test("limite por minuto (429 com tempo de espera): espera e tenta de novo em vez de desistir", async () => {
+  const { config } = await import("../src/config.js");
+  const antes = { base: config.groqBase, gem: config.geminiKey, or: config.openrouterKey };
+  try {
+    config.groqBase = `http://127.0.0.1:${porta}/espera`;
+    config.geminiKey = ""; config.openrouterKey = "";
+    chamadas.porProvedor.espera = 0;
+    const inicio = Date.now();
+    const { resposta } = await llm.perguntarJSON("Você é o ANALISTA", "teste");
+    assert.equal(resposta.veredito, "Verdadeira");
+    assert.equal(chamadas.porProvedor.espera, 2, "tentou de novo depois do 429");
+    assert.ok(Date.now() - inicio >= 200, "esperou o tempo pedido");
+  } finally {
+    Object.assign(config, { groqBase: antes.base, geminiKey: antes.gem, openrouterKey: antes.or });
+  }
+});
+
+test("segundosParaEsperar entende o Retry-After e as mensagens da Groq e do Gemini", () => {
+  assert.equal(llm.segundosParaEsperar("7", ""), 7);
+  assert.equal(llm.segundosParaEsperar(null, "Please try again in 12.5s."), 12.5);
+  assert.equal(llm.segundosParaEsperar(null, "Please try again in 2m3.5s."), 123.5);
+  assert.equal(llm.segundosParaEsperar(null, '"retryDelay": "31s"'), 31);
+  assert.equal(llm.segundosParaEsperar(null, "quota exceeded"), undefined);
+});
+
+test("confiança na escala 0..1 (0.95) vira 95%, e não 1%; veredito escrito de outro jeito é aceito", () => {
+  assert.equal(agentes.normalizarConfianca(0.95), 95);
+  assert.equal(agentes.normalizarConfianca("95%"), 95);
+  assert.equal(agentes.normalizarConfianca(85), 85);
+  assert.equal(agentes.normalizarConfianca(0), 0);
+  assert.equal(agentes.normalizarConfianca("abc"), 0);
+  assert.deepEqual([agentes.validarVoto({ veredito: "Verdadeiro", confianca: 0.9 }).veredito, agentes.validarVoto({ veredito: "Verdadeiro", confianca: 0.9 }).confianca], ["Verdadeira", 90]);
+  assert.equal(agentes.validarVoto({ veredito: "falso", confianca: 80 }).veredito, "Falsa");
+  assert.equal(agentes.validarVoto({ veredito: "talvez", confianca: 80 }).veredito, "Inconclusiva");
 });

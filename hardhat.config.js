@@ -2,7 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
 // Lê as variáveis secretas do arquivo .env (que NÃO vai para o GitHub)
-const { SEPOLIA_RPC_URL, PRIVATE_KEY } = process.env;
+const { SEPOLIA_RPC_URL, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
 
 const networks = {};
 
@@ -22,5 +22,9 @@ module.exports = {
     settings: { viaIR: true, optimizer: { enabled: true, runs: 50 } },
   },
   networks,
+  // Verificação no Etherscan (scripts/verificar.js): publica o código-fonte para qualquer um conferir
+  // que o contrato na rede é exatamente este. Chave grátis em etherscan.io/myapikey (vale para a Sepolia).
+  etherscan: { apiKey: ETHERSCAN_API_KEY || "" },
+  sourcify: { enabled: false },
 };
 
