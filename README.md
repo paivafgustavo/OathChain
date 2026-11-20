@@ -464,7 +464,7 @@ OathChain/
 │   ├── src/                     # filtro, agentes, busca, relatório (+IPFS), chain, servidor, cli,
 │   │                            #   diagnostico e acuracia
 │   ├── dados/acuracia.json      # afirmações com veredito conhecido (teste de acurácia)
-│   ├── test/                    # 29 testes com servidores falsos
+│   ├── test/                    # 31 testes com servidores falsos
 │   └── .env.exemplo
 ├── deployments/sepolia.json     # endereços publicados (públicos)
 ├── docs/
@@ -575,7 +575,7 @@ Depois rode o mesmo comando sem `DEMO` para voltar ao normal (7 dias / 7 dias / 
 
 ## 🧪 Cobertura dos testes
 
-**86 testes de contrato** (simulam também a passagem do tempo) e **29 testes do serviço de IA** (com servidores falsos, sem gastar cota), incluindo o filtro de fato vs. opinião, as métricas de acurácia e o envio ao IPFS.
+**86 testes de contrato** (simulam também a passagem do tempo) e **31 testes do serviço de IA** (com servidores falsos, sem gastar cota), incluindo o filtro de fato vs. opinião, as métricas de acurácia e o envio ao IPFS.
 
 ### Acurácia da IA (`npm run acuracia`)
 
@@ -588,7 +588,7 @@ Depois rode o mesmo comando sem `DEMO` para voltar ao normal (7 dias / 7 dias / 
 | Fatos decididos sem precisar do júri | 83% (10 de 12; os outros 2 saíram "Inconclusiva" e iriam ao júri) |
 | Opiniões/previsões barradas pelo filtro | 3 de 3, e nenhum fato barrado por engano |
 
-São fatos fáceis e sem controvérsia, então é um teto otimista; detalhes e limites em [docs/RELATORIO.md](docs/RELATORIO.md).
+São fatos fáceis e sem controvérsia, então é um teto otimista. Com **notícias reais e recentes** (11 itens; 5 medidos até agora, porque os créditos da busca na web acabaram), a IA continuou sem erros graves, mas decidiu sozinha em só 1 de 4 fatos: sem achar a página exata, ela devolve a decisão ao júri. Detalhes e limites em [docs/RELATORIO.md](docs/RELATORIO.md).
 
 ### Testes automatizados
 

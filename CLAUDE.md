@@ -46,7 +46,7 @@ npx hardhat run scripts/setup-revisores.js --network sepolia
 npx hardhat run scripts/janelas.js --network sepolia
 ```
 Site: `cd frontend; npm install; npm run dev` (local) / `npm run build` (saída em `dist`).
-Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) | `npm test` (27 testes) | `npm run diagnostico` | `npm run acuracia -- --max 5` | `npm run verificar -- --texto "..." --assunto Meio_Ambiente --ref 2024` (CLI de teste).
+Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) | `npm test` (31 testes) | `npm run diagnostico` | `npm run acuracia -- --max 5` | `npm run verificar -- --texto "..." --assunto Meio_Ambiente --ref 2024` (CLI de teste).
 
 ## Estado atual (20/11/2026)
 - **Publicado:** site https://oath-chain.vercel.app (Vercel, root `frontend`), serviço de IA no Render (`render.yaml`, relatórios no IPFS via Pinata, UptimeRobot em /saude). Ciclo completo em produção validado no registro #4. Rodar o serviço local junto com o Render duplica o trabalho: não fazer.
@@ -74,12 +74,14 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 ## O que falta (roadmap)
 **Feito:** contratos v5 (83 testes), júri sorteado, voto aberto com justificativa, finalização antecipada, candidatura de revisores, IA híbrida, serviço de IA, site com landing/logo, README, deploy na Sepolia.
 **Feito em 19/11:** corrigido o `npm start` que não rodava no Windows (comparação de `import.meta.url`); filtro fato vs. opinião (`servico/src/filtro.js`); `npm run acuracia` + `servico/dados/acuracia.json`; IPFS opcional dos relatórios via Pinata (`PINATA_JWT`, URL `ipfs://CID`, site tenta 3 gateways); `npm run diagnostico`; `scripts/autorizar-agente.js`; `janelas.js` com `DEMO=1` e janela de recurso da IA; `docs/ROTEIRO-DEMO.md`; LICENSE. Testes do serviço: 21 (eles agora zeram as chaves reais do `.env`, que antes faziam o teste chamar APIs de verdade e travar).
+**20/11:** créditos grátis do Firecrawl ESGOTARAM (402) no meio da acurácia: sem busca na web, notícias recentes viram Inconclusiva (também em produção no Render). Adicionada a Tavily (`TAVILY_API_KEY`, `buscarTavily` em busca.js) como segunda busca, mas o Gustavo DECIDIU não criar a chave (fica opcional, sem uso); a acurácia exclui itens sem fonte da web por falta de crédito (`semBuscaWeb`). Base de acurácia: 26 itens (11 notícias reais com `"real": true`). Resultado parcial das reais: precisão automática 100%, cobertura só 11% (1 de 9), 0 erros graves.
 **Diagnóstico de 19/11:** IA destravada (agente autorizado, 1º veredito real no registro 2: Verdadeira 36% → júri). Corrigida a corrida entre ciclos do serviço (trava + reconferência do estado). O serviço agora chama `finalizar` (todos votaram ou prazo acabou) e `confirmarIA` (janela de recurso acabou) sozinho (`finalizarProntos`, com `staticCall` antes). Atenção: `confirmarIA` grava `fimContestacao = agora`, então veredito da IA confirmado NÃO tem janela de contestação (só o caminho do júri tem). Sem o serviço rodando, o botão "Finalizar votação" do site continua funcionando. Testes do serviço: 29. `npm run acuracia -- --continuar` completa a base em vários dias (cota diária do Gemini acaba em ~5 afirmações). Bug corrigido: modelos devolviam confiança em 0..1 (0.95 virava 1%); agora `normalizarConfianca` e sinônimos de veredito. Groq gpt-oss com `reasoning_effort: low` (GROQ_REASONING). Falha só da réplica não invalida a análise (`agenteSemResposta`). Cota de IA: 429 por minuto agora espera e tenta de novo; sem resposta da IA o serviço NÃO grava nada e pausa 10 min; prompts limitados a 8 fontes × 800 caracteres; a acurácia exclui itens com falha de IA (pausa padrão 20 s).
 
 **A fazer:**
 - [ ] Destravar a verificação da IA: preencher `PRIVATE_KEY_AGENTE`, rodar `scripts/autorizar-agente.js`, `npm run diagnostico`, `npm start`
 - [ ] Testar o ciclo completo na Sepolia (IA, júri, votar, finalizar)
 - [x] Acurácia completa em 20/11: 15/15 medidas, precisão automática 100% (10/10), 0 erros graves, cobertura 83%, filtro 3/3 (RELATORIO seção 6 e README atualizados)
+- [ ] Quando os créditos do Firecrawl renovarem (mensal): `npm run acuracia -- --continuar` para os 6 itens reais sem busca e atualizar RELATORIO seção 6 ("Notícias reais (parcial)")
 - [ ] Acrescentar afirmações checadas por agências (Lupa, Aos Fatos, Comprova) em `servico/dados/acuracia.json`
 - [ ] Hospedar o serviço no Render (`render.yaml` pronto; passo a passo em `docs/HOSPEDAGEM.md`; precisa de PINATA_JWT porque o disco do Render é apagado; UptimeRobot em /saude para não dormir; o serviço lê PORT)
 - [ ] Publicar o site na Vercel (passo a passo em `docs/HOSPEDAGEM.md`)

@@ -73,6 +73,20 @@ export async function buscarFirecrawl(consulta) {
   }));
 }
 
+/** Tavily: busca na web feita para agentes de IA (plano grátis: 1.000 buscas/mês, sem cartão).
+ *  Segunda busca na web: quando os créditos do Firecrawl acabam (erro 402), as notícias recentes continuam aparecendo. */
+export async function buscarTavily(consulta) {
+  if (!config.tavilyKey) return [];
+  const d = await pegar(`${config.tavilyBase}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.tavilyKey}` },
+    body: JSON.stringify({ query: consulta, max_results: 4, search_depth: "basic", include_answer: false }),
+  });
+  return (d?.results || []).map((x) => ({
+    origem: "tavily", titulo: x.title || x.url, url: x.url, trecho: corta(x.content),
+  }));
+}
+
 export async function buscarDuckDuckGo(consulta) {
   const q = new URLSearchParams({ q: consulta, format: "json", no_html: "1", skip_disambig: "1" });
   const d = await pegar(`https://api.duckduckgo.com/?${q}`);
@@ -85,7 +99,7 @@ export async function buscarDuckDuckGo(consulta) {
 export async function coletarEvidencias(consultas, { aoFalhar = () => {} } = {}) {
   const tarefas = [];
   for (const c of consultas) {
-    for (const fn of [buscarChecagens, buscarWikipedia, buscarFirecrawl]) {
+    for (const fn of [buscarChecagens, buscarWikipedia, buscarFirecrawl, buscarTavily]) {
       tarefas.push(fn(c).catch((e) => { aoFalhar(`${fn.name}: ${e.message}`); return []; }));
     }
   }

@@ -12,7 +12,7 @@ O resultado vai para o contrato como veredito **provisório**; humanos podem rec
    `npx hardhat run scripts/autorizar-agente.js --network sepolia` (com a conta dona do contrato).
 5. `npm run diagnostico`: confere `.env`, endereço do contrato, autorização do agente, saldo e a fila (não mostra chaves).
 6. `npm start`: o serviço procura afirmações novas a cada 30 s e registra o veredito.
-7. `npm test`: 29 testes automáticos com servidores falsos (não gasta cota de nenhuma API).
+7. `npm test`: 31 testes automáticos com servidores falsos (não gasta cota de nenhuma API).
 
 Sem nenhuma chave, roda em **modo demonstração** (respostas simuladas, o relatório diz `"simulado": true`).
 
@@ -36,6 +36,9 @@ Use `--max 5` para poupar cota e `--continuar` para completar a base em vários 
 Com `PINATA_JWT`, o relatório (texto exato) também é publicado no IPFS e a blockchain guarda `ipfs://CID`.
 O site tenta vários gateways públicos e confere o hash: um gateway que altere o texto é pego na hora.
 Se a Pinata falhar, o serviço usa a própria URL (`URL_PUBLICA`) e segue.
+
+## Busca na web: Firecrawl + Tavily
+As duas têm plano grátis (1.000 por mês cada). Notícias recentes só aparecem por elas, porque Wikipédia e Fact Check não cobrem dados de semanas atrás. Com as duas chaves, quando uma fica sem créditos (erro 402), a outra cobre. No teste de acurácia, um item medido sem nenhuma fonte da web por falta de créditos fica fora da conta e é refeito no `--continuar`.
 
 ## Garantias
 - O relatório é um arquivo de texto; o hash (keccak256) desse texto fica na blockchain. Quem baixar confere.

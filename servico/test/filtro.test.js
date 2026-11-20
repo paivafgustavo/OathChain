@@ -105,3 +105,12 @@ test("acurácia --continuar: junta rodadas sem perder o que já foi medido", asy
   assert.equal(j[1].veredito, "Falsa", "medição nova substitui falha antiga");
   assert.equal(j[2].falhaDeIA, true);
 });
+
+test("acurácia: item sem nenhuma fonte da web porque a busca ficou sem créditos (402) fica fora da conta", async () => {
+  const { semBuscaWeb } = await import("../src/acuracia.js");
+  const sem = { avisos: ["buscarFirecrawl: api.firecrawl.dev respondeu 402"], fontesWeb: 0 };
+  assert.equal(semBuscaWeb(sem), true);
+  assert.equal(semBuscaWeb({ ...sem, fontesWeb: 2 }), false, "a Tavily cobriu: a medição vale");
+  assert.equal(semBuscaWeb({ avisos: ["buscarFirecrawl: The operation was aborted due to timeout"], fontesWeb: 0 }), false, "timeout isolado não é falta de crédito");
+  assert.equal(semBuscaWeb({ avisos: ["buscarFirecrawl: api.firecrawl.dev respondeu 402"] }), true, "resultado antigo, sem o campo fontesWeb");
+});

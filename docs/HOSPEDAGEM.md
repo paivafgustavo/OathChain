@@ -24,6 +24,7 @@ No plano grátis, o disco do Render é apagado a cada reinício. Sem IPFS, os re
 2. **New → Blueprint**, escolha o repositório `OathChain`. O Render lê o `render.yaml` da raiz.
 3. Ele pede as chaves marcadas como secretas. Copie os mesmos valores do seu `servico/.env`:
    `GROQ_API_KEY`, `GEMINI_API_KEY`, `FIRECRAWL_API_KEY`, `PINATA_JWT`, `RPC_URL`, `PRIVATE_KEY_AGENTE`.
+   Opcional: `TAVILY_API_KEY` (grátis em <https://app.tavily.com>), uma segunda busca na web para quando os 1.000 créditos mensais do Firecrawl acabarem. Se quiser usar, adicione em Environment.
    Deixe vazias as que você não usa (`OPENROUTER_API_KEY`, `FACTCHECK_API_KEY`).
 4. Em `URL_PUBLICA`, por enquanto ponha `https://oathchain-ia.onrender.com`. Depois do primeiro deploy, confira o endereço real no topo da página do serviço e corrija se for diferente.
 5. **Apply**. Quando terminar, abra `https://SEU-ENDERECO.onrender.com/saude`. Deve aparecer `{"ok":true,"demo":false,"iaConfigurada":true}`.

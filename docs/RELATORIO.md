@@ -89,7 +89,7 @@ O protótipo ainda depende de um **dono** e de **uma carteira de IA**. O caso ma
 
 ### Testes automatizados
 - **86 testes dos contratos** (Hardhat; simulam também a passagem do tempo): regras de maioria, contestação, superação, IA, júri, voto aberto e secreto, candidatura, faltas.
-- **29 testes do serviço de IA**, com servidores falsos, sem gastar cota: filtro, consolidação, saneamento, injeção de prompt, SSRF, troca de provedor, espera no limite por minuto, hash do relatório, IPFS, encerramento automático, métricas de acurácia.
+- **31 testes do serviço de IA**, com servidores falsos, sem gastar cota: filtro, consolidação, saneamento, injeção de prompt, SSRF, troca de provedor, espera no limite por minuto, hash do relatório, IPFS, encerramento automático, métricas de acurácia.
 - Tamanho do contrato principal: cerca de 23,3 KB, abaixo do limite de 24 KB da rede (com `viaIR` e o otimizador).
 
 ### Ciclo real na Sepolia
@@ -123,7 +123,19 @@ As duas "Inconclusivas" ("Brasília é a capital desde 1960" e "a seleção venc
 2. São fatos fáceis e sem controvérsia, então o resultado é um **teto otimista**.
 3. Os itens não foram checados por agências.
 
-O próximo passo é acrescentar afirmações difíceis, já checadas por Lupa, Aos Fatos ou Comprova, e acompanhar a métrica a cada mudança de modelo.
+#### Notícias reais e recentes (parcial)
+Para um teste mais difícil, foram acrescentadas 11 notícias reais de 2025–2026 com fonte (IBGE, INPE, Inep, Ministério da Saúde, Fórum Brasileiro de Segurança Pública, Trata Brasil). Algumas foram reescritas com o dado trocado de propósito, para virar afirmações falsas. No meio da medição, os créditos gratuitos da busca na web (Firecrawl, 1.000 por mês) acabaram. Os 6 itens medidos sem nenhuma fonte da web ficaram **fora da conta**, porque mediriam a falta de créditos e não a IA; eles serão refeitos quando os créditos renovarem.
+
+| Notícias reais medidas com busca na web | Resultado |
+|---|---|
+| Precisão quando a IA decide sozinha | 100% (1 de 1: Prodes, Verdadeira com 90%) |
+| Erros graves | 0 |
+| Cobertura (decidiu sem o júri) | 25% (1 de 4) |
+| Opinião barrada pelo filtro | 1 de 1 |
+
+**Leitura:** com notícias de poucas semanas atrás, a IA quase sempre devolve a decisão ao júri. O Avaliador de fontes costuma concordar com a afirmação, mas o Analista não confirma o número exato nas páginas encontradas. Isso mostra o principal limite do sistema: **a qualidade do veredito depende de achar a página da notícia**, e a busca gratuita é escassa. Mesmo assim, em nenhum caso a IA afirmou algo errado com confiança.
+
+O próximo passo é completar essa medição, acrescentar afirmações checadas por Lupa, Aos Fatos ou Comprova e acompanhar a métrica a cada mudança de modelo.
 
 **Dois defeitos encontrados pelo próprio teste e corrigidos:**
 - alguns modelos respondiam a confiança na escala de 0 a 1 (0,95 era lido como 1%);
@@ -133,6 +145,7 @@ O próximo passo é acrescentar afirmações difíceis, já checadas por Lupa, A
 
 - **Entrada não é verdade:** a blockchain garante que o registro não mudou, não que ele seja verdadeiro.
 - **IA gratuita:** erra, tem cota diária pequena e depende de provedores externos.
+- **Busca na web gratuita:** com os créditos do Firecrawl esgotados, notícias recentes ficam sem fonte e vão ao júri como "Inconclusiva". O sistema continua seguro (não inventa veredito), mas a IA ajuda menos. O código já aceita uma segunda busca (Tavily), opcional.
 - **Júri pequeno** na testnet (4 revisores): pouca diversidade no sorteio.
 - **Texto dentro do contrato:** os registros ainda guardam o texto no próprio contrato. Isso é caro numa rede principal; o caminho é guardar só o CID do IPFS.
 - **Registro restrito a revisores (v6):** fecha a brecha de spam pelo Etherscan, mas o público em geral só registra depois de passar pela candidatura. É uma troca consciente: menos abertura em troca de menos spam e de cota de IA protegida.

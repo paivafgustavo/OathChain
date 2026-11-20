@@ -16,6 +16,7 @@ for (const [nome, valor] of [["RPC_URL", config.rpcUrl], ["CONTRACT_ADDRESS", co
 }
 const ias = [["GROQ_API_KEY", config.groqKey], ["GEMINI_API_KEY", config.geminiKey], ["OPENROUTER_API_KEY", config.openrouterKey]].filter(([, v]) => v).map(([n]) => n);
 ias.length ? ok("chaves de IA: " + ias.join(", ")) : aviso("nenhuma chave de IA: o serviço vai rodar em MODO DEMONSTRAÇÃO (vereditos simulados)");
+config.tavilyKey ? ok("TAVILY_API_KEY preenchido (segunda busca na web)") : aviso("sem TAVILY_API_KEY: se os créditos do Firecrawl acabarem, notícias recentes ficam sem fonte (chave grátis em app.tavily.com)");
 config.firecrawlKey ? ok("FIRECRAWL_API_KEY preenchido") : aviso("sem FIRECRAWL_API_KEY: menos fontes (só Wikipédia, Fact Check e DuckDuckGo)");
 config.pinataJwt ? ok("PINATA_JWT preenchido: relatórios vão para o IPFS") : aviso("sem PINATA_JWT: relatórios ficam só neste computador (URL_PUBLICA)");
 if (/localhost|127\.0\.0\.1/.test(config.urlPublica) && !config.pinataJwt) aviso("URL_PUBLICA é localhost: só quem está neste computador consegue abrir o relatório no site");

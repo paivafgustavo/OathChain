@@ -48,6 +48,16 @@ export function calcularMetricas(todos, limite = 70) {
   };
 }
 
+/**
+ * A busca na web (Firecrawl/Tavily) ficou sem créditos (402/429) e nenhuma fonte da web entrou?
+ * Então o "Inconclusiva" mediu a falta de créditos, não a IA: o item fica fora da conta e é refeito.
+ * Para resultados antigos (sem o campo fontesWeb) olha só os avisos.
+ */
+export function semBuscaWeb(r) {
+  const esgotou = (r.avisos || []).some((m) => /^buscar(Firecrawl|Tavily): .*respondeu (402|429|432|433)/.test(m));
+  return esgotou && !(r.fontesWeb > 0);
+}
+
 export function validarDataset(lista) {
   if (!Array.isArray(lista) || lista.length === 0) throw new Error("O arquivo precisa ter uma lista de afirmações");
   lista.forEach((a, i) => {
@@ -86,6 +96,8 @@ async function main() {
     const antigo = JSON.parse(fs.readFileSync(SAIDA, "utf8"));
     if (!antigo.simulado) anteriores = antigo.resultados || [];
   }
+  // resultados antigos medidos sem busca na web (créditos esgotados) também são refeitos
+  for (const r of anteriores) if (r.verificavel !== false && semBuscaWeb(r)) { r.falhaDeIA = true; r.semBuscaWeb = true; }
   const medidos = new Set(anteriores.filter((r) => !r.falhaDeIA).map((r) => r.texto));
   const dados = todosOsDados.filter((a) => !medidos.has(a.texto)).slice(0, max);
   if (medidos.size) console.log(`Continuando: ${medidos.size} já medidas, faltam ${todosOsDados.length - medidos.size}.`);
@@ -101,16 +113,19 @@ async function main() {
     try {
       const analise = await verificarAfirmacao({ texto: a.texto, assunto: a.assunto, referencia: a.referencia || "" });
       // algum agente ficou sem resposta (429, cota, rede)? então o veredito não reflete a IA, e sim a falha
-      const falhaDeIA = agenteSemResposta(analise.avisos);
+      const fontesWeb = analise.evidencias.filter((e) => e.origem === "firecrawl" || e.origem === "tavily").length;
       r = { ...a, veredito: analise.resultado.veredito, confianca: analise.resultado.confianca, verificavel: analise.filtro?.verificavel ?? true,
-        fontes: analise.evidencias.length, votos: analise.resultado.votos, avisos: analise.avisos, falhaDeIA };
+        fontes: analise.evidencias.length, fontesWeb, votos: analise.resultado.votos, avisos: analise.avisos };
+      r.semBuscaWeb = r.verificavel && semBuscaWeb(r);
+      r.falhaDeIA = agenteSemResposta(analise.avisos) || r.semBuscaWeb;
     } catch (e) {
       r = { ...a, veredito: "Inconclusiva", confianca: 0, verificavel: true, erro: e.message, falhaDeIA: true };
     }
     const certo = (r.esperado === "opiniao" || r.esperado === "previsao") ? !r.verificavel : r.verificavel && r.veredito === r.esperado;
     const icone = r.falhaDeIA ? "⚠️ " : certo ? "✅" : "❌";
     console.log(`${icone} ${i + 1}. esperado ${r.esperado}, IA ${r.verificavel ? `${r.veredito} (${r.confianca}%)` : "barrou no filtro"}: ${a.texto.slice(0, 70)}`);
-    if (r.falhaDeIA) console.log("     (a IA não respondeu: " + String(r.erro || r.avisos.find((m) => /falhou|estimativa/.test(m))).slice(0, 140) + "...) fora da conta");
+    if (r.semBuscaWeb) console.log("     (busca na web sem créditos: nenhuma fonte recente. Fora da conta; ponha TAVILY_API_KEY e rode --continuar)");
+    else if (r.falhaDeIA) console.log("     (a IA não respondeu: " + String(r.erro || r.avisos.find((m) => /falhou|estimativa/.test(m))).slice(0, 140) + "...) fora da conta");
     resultados.push({ ...r, certo, segundos: Math.round((Date.now() - inicio) / 1000) });
     falhasSeguidas = r.falhaDeIA ? falhasSeguidas + 1 : 0;
     if (falhasSeguidas >= 2) {
@@ -133,6 +148,17 @@ async function main() {
   console.log(`Fatos barrados por engano no filtro:  ${m.fatosBarradosPeloFiltro}`);
   console.log(`Opiniões/previsões detectadas:        ${m.opinioesDetectadas ?? "-"}%`);
   console.log("Matriz (esperado -> obtido):", JSON.stringify(m.matriz));
+  // Notícias reais e recentes ("real": true) são o teste mais difícil: mostra o resultado só delas
+  const reais = juntos.filter((r) => r.real);
+  if (reais.length) {
+    const mr = calcularMetricas(reais);
+    console.log(`\n--- Só as notícias reais (${mr.total} medidas de ${todosOsDados.filter((a) => a.real).length}) ---`);
+    console.log(`Precisão quando decide sozinha:       ${mr.precisaoAutomatica ?? "-"}%`);
+    console.log(`A IA decidiu sozinha (conf. >= 70):   ${mr.coberturaAutomatica ?? "-"}% dos fatos`);
+    console.log(`Erros graves (Verdadeira <-> Falsa):  ${mr.errosGraves}`);
+    console.log("Matriz (esperado -> obtido):", JSON.stringify(mr.matriz));
+    m.noticiasReais = mr;
+  }
   fs.writeFileSync(SAIDA, JSON.stringify({ geradoEm: new Date().toISOString(), simulado: modoDemo(), metricas: m, resultados: juntos }, null, 2));
   console.log(`\nDetalhes em ${SAIDA}`);
 }
