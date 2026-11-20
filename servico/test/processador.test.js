@@ -4,20 +4,25 @@ import assert from "node:assert/strict";
 process.env.DEMO = "1";
 const { finalizarProntos } = await import("../src/processador.js");
 
-// Contrato falso: #1 Registrada, #2 em votação com todos votando, #3 em votação esperando votos, #4 finalizada
+// Contrato falso: #1 Registrada, #2 em votação com todos votando, #3 em votação esperando votos, #4 finalizada,
+// #5 provisória com a janela de recurso encerrada, #6 provisória com a janela ainda aberta
 function contratoFalso() {
-  const estados = { 1: 0, 2: 1, 3: 1, 4: 2 };
+  const estados = { 1: 0, 2: 1, 3: 1, 4: 2, 5: 4, 6: 4 };
   const enviados = [];
   const finalizar = async (id) => { enviados.push(id); estados[id] = 2; return { hash: "0xabc" + id, wait: async () => {} }; };
   finalizar.staticCall = async (id) => { if (id !== 2) throw new Error("Aguarde o fim da votacao"); };
-  return { enviados, finalizar, obterRegistro: async (id) => ({ estado: estados[id] }) };
+  const confirmados = [];
+  const confirmarIA = async (id) => { confirmados.push(id); estados[id] = 2; return { hash: "0xdef" + id, wait: async () => {} }; };
+  confirmarIA.staticCall = async (id) => { if (id !== 5) throw new Error("Janela de recurso ainda aberta"); };
+  return { enviados, confirmados, finalizar, confirmarIA, obterRegistro: async (id) => ({ estado: estados[id] }) };
 }
 
 test("encerramento automático: só envia finalizar quando o contrato aceitaria (todos votaram ou prazo acabou)", async () => {
   const c = contratoFalso();
   const logs = [];
-  const r = await finalizarProntos(c, 5, (m) => logs.push(m));
-  assert.deepEqual(r, [2]);
+  const r = await finalizarProntos(c, 7, (m) => logs.push(m));
+  assert.deepEqual(r, [2, 5]);
+  assert.deepEqual(c.confirmados, [5], "confirma a IA só quando a janela de recurso acabou (#6 ainda aberta)");
   assert.deepEqual(c.enviados, [2], "não gasta gás com #3 (ainda esperando votos) nem com #1/#4 (fora de votação)");
   assert.match(logs[0], /#2: votação encerrada automaticamente/);
 });

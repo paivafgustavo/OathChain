@@ -89,19 +89,29 @@ async function rodar(log) {
  * sorteados já votaram ou quando o prazo acabou. Antes, simula a chamada (staticCall, de graça):
  * se o contrato recusaria ("Aguarde o fim da votacao", "Sem maioria ainda"...), não gasta gás.
  * Quem decide se pode encerrar continua sendo o contrato; o serviço só aperta o botão.
+ *
+ * O mesmo vale para o veredito PROVISÓRIO da IA: quando a janela de recurso acaba sem ninguém recorrer,
+ * o serviço chama "confirmarIA" (o contrato confere o prazo). Sem isso, o registro ficava parado em
+ * "Pode ser confirmado" até alguém clicar no botão.
  */
+const ACOES_AUTOMATICAS = {
+  1: { funcao: "finalizar", texto: "votação encerrada automaticamente (todos votaram ou o prazo acabou)" }, // EmVerificacao
+  4: { funcao: "confirmarIA", texto: "veredito da IA confirmado automaticamente (ninguém recorreu no prazo)" }, // Provisoria
+};
+
 export async function finalizarProntos(contrato, proximo, log = console.log) {
   const finalizados = [];
   for (let id = 1; id < proximo; id++) {
     try {
-      if (Number((await contrato.obterRegistro(id)).estado) !== 1) continue; // 1 = EmVerificacao
-      try { await contrato.finalizar.staticCall(id); } catch { continue; } // ainda não pode: espera
-      const tx = await contrato.finalizar(id);
+      const acao = ACOES_AUTOMATICAS[Number((await contrato.obterRegistro(id)).estado)];
+      if (!acao) continue;
+      try { await contrato[acao.funcao].staticCall(id); } catch { continue; } // ainda não pode: espera
+      const tx = await contrato[acao.funcao](id);
       await tx.wait();
-      log(`  #${id}: votação encerrada automaticamente (todos votaram ou o prazo acabou) tx ${tx.hash}`);
+      log(`  #${id}: ${acao.texto} tx ${tx.hash}`);
       finalizados.push(id);
     } catch (e) {
-      log(`  #${id}: não consegui finalizar agora (${e.shortMessage || e.message}); tento no próximo ciclo.`);
+      log(`  #${id}: não consegui concluir agora (${e.shortMessage || e.message}); tento no próximo ciclo.`);
     }
   }
   return finalizados;

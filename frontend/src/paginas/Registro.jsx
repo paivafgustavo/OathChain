@@ -63,7 +63,7 @@ export default function Registro({ d, id }) {
   const textoVeredito = r.estado === 2 ? VEREDITOS[r.resultado] : r.estado === 3 ? "Sem consenso" : r.estado === 1 ? "Em votação" : r.estado === 4 ? `Provisório: ${VEREDITOS[r.ia?.veredito || 0]}` : r.tipo === 0 ? "Aguardando a IA" : "Aguardando verificação";
   let chip = "";
   if (r.estado === 2) chip = def ? "Definitivo" : `Em contestação · faltam ${restante(r.fimContestacao, agora)}`;
-  else if (r.estado === 4) chip = r.ia && agora < r.ia.fimRevisao ? `Janela de recurso · faltam ${restante(r.ia.fimRevisao, agora)}` : "Pode ser confirmado";
+  else if (r.estado === 4) chip = r.ia && agora < r.ia.fimRevisao ? `Janela de recurso · faltam ${restante(r.ia.fimRevisao, agora)}` : "Ninguém recorreu · confirmando";
   else if (r.estado === 1) chip = todosRevelaram ? "Todos votaram · encerrando" : r.fimVotacao ? `Votação até ${formatarData(r.fimVotacao)}` : "Aguardando o sorteio do júri";
   else if (r.estado === 0) chip = r.tipo === 1 && !prazoVenceu ? `Prazo em ${formatarData(r.prazo)}` : "Aguardando abertura da verificação";
   else chip = "Encerrado sem veredito";
