@@ -84,6 +84,17 @@ async function main() {
     fs.writeFileSync(arquivoInterface, JSON.stringify({ OathChain: endereco, GestaoRevisores: enderecoGestao, bloco: blocoDeploy }, null, 2));
     console.log("Interface atualizada com o novo endereço:", arquivoInterface);
   }
+
+  // E o render.yaml (serviço de IA hospedado): depois do git push, o Render passa a usar o contrato novo
+  const arquivoRender = path.join(__dirname, "..", "render.yaml");
+  if (hre.network.name === "sepolia" && fs.existsSync(arquivoRender)) {
+    const antes = fs.readFileSync(arquivoRender, "utf8");
+    const depois = antes.replace(/(- key: CONTRACT_ADDRESS\s*\n\s*value: ")0x[0-9a-fA-F]{40}(")/, `$1${endereco}$2`);
+    if (depois !== antes) {
+      fs.writeFileSync(arquivoRender, depois);
+      console.log("render.yaml atualizado (CONTRACT_ADDRESS). Confira também no painel do Render: Environment.");
+    }
+  }
 }
 
 main().catch((erro) => {

@@ -417,7 +417,7 @@ Fonte
 | `definirJuri`, `definirGestao`, `definirAgenteVerificador`, `definirJanelaRevisaoIA`, `definirLimiteConfianca`, `definirMinRevisores`, `definirJanelaVotacao`, `definirJanelaContestacao` | Dono | Ajustam parâmetros. `definirRevisor` fica só como atalho de teste. |
 | `candidatar()` / `promover(addr)` / `rebaixar(addr)` / `sair()` / `sacar()` | Qualquer pessoa (`GestaoRevisores`) | Candidatura, promoção automática, saída e saque do depósito. |
 
-\* O **site** só mostra o botão de registrar para revisores (`SO_REVISOR_REGISTRA` em `frontend/src/config.js`), mas o contrato ainda aceita registro de qualquer carteira. Veja [Limitações](#-limitações-e-riscos).
+* Desde a **v6**, só **revisores** registram: o contrato exige isso (`"Apenas revisores registram"`), e o site só mostra o botão para eles. O público entra pela candidatura em **Seja revisor**.
 
 **Consultas (gratuitas):** `obterRegistro` · `ehVerificado` · `ehDefinitivo` · `obterVerificacaoIA` · `obterJuri` · `obterPapel` · `obterCompromisso` · `obterFontes` · `obterVoto` · `obterContagem` · `obterRevisores` · `obterCandidato` · `podePromover`
 
@@ -452,7 +452,7 @@ OathChain/
 │   ├── OathChain.sol            # contrato principal (IA, júri, voto secreto)
 │   └── GestaoRevisores.sol      # candidatura, prova e promoção automática
 ├── test/
-│   ├── OathChain.test.js        # 53 testes (regras base, contestação, IA)
+│   ├── OathChain.test.js        # 56 testes (regras base, contestação, IA)
 │   └── Juri.test.js             # 30 testes (sorteio, voto aberto e secreto, candidatura)
 ├── scripts/
 │   ├── deploy.js                # publica os 2 contratos (DEMO=1 liga janelas curtas)
@@ -575,7 +575,7 @@ Depois rode o mesmo comando sem `DEMO` para voltar ao normal (7 dias / 7 dias / 
 
 ## 🧪 Cobertura dos testes
 
-**83 testes de contrato** (simulam também a passagem do tempo) e **29 testes do serviço de IA** (com servidores falsos, sem gastar cota), incluindo o filtro de fato vs. opinião, as métricas de acurácia e o envio ao IPFS.
+**86 testes de contrato** (simulam também a passagem do tempo) e **29 testes do serviço de IA** (com servidores falsos, sem gastar cota), incluindo o filtro de fato vs. opinião, as métricas de acurácia e o envio ao IPFS.
 
 ### Acurácia da IA (`npm run acuracia`)
 
@@ -704,7 +704,6 @@ Este é um **protótipo acadêmico**. Os limites abaixo são conhecidos e fazem 
 | **Cotas gratuitas de IA** | Os planos grátis limitam chamadas por minuto e por dia (cerca de 5 a 10 verificações por dia no Gemini). | Troca automática de provedor, espera no limite por minuto, limite diário no serviço. |
 | **Júri pequeno** | Com poucos revisores o sorteio é pouco diverso. | O crescimento é gradual; o contrato exige jurados suficientes. |
 | **Sorteio com hash de bloco** | Um validador poderia influenciar o hash em tese. | Aceitável para uma testnet acadêmica; em produção usaria uma fonte de aleatoriedade verificável (ex.: VRF). |
-| **Registro aberto no contrato** | O site só mostra o botão de registrar para revisores, mas o contrato aceita registro de qualquer carteira. | Decisão em aberto. A IA e o limite diário reduzem o spam. |
 | **Conteúdo dentro do contrato** | O texto e os metadados dos registros ficam gravados no próprio contrato (os relatórios da IA já podem ir para o IPFS). | Levar também o texto dos registros para o IPFS, com o contrato guardando só o CID. |
 | **Hash da fonte não conferido** | O contrato não verifica se o hash corresponde ao arquivo. | A conferência é feita por quem abre a cópia. |
 | **Conteúdo que ninguém apaga** | Um registro imutável também pode receber conteúdo ilegal ou nocivo. | Discussão obrigatória no relatório. |

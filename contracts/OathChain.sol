@@ -315,7 +315,10 @@ contract OathChain is Ownable {
         bytes32 hashCriterios,
         uint64 prazo
     ) private returns (uint256 id) {
+        // v6: só revisores registram (antes só o site restringia; pelo Etherscan qualquer carteira registrava).
+        // Evita spam que gasta a cota da IA. O público entra pela candidatura (GestaoRevisores).
         require(bytes(cidConteudo).length > 0, "CID vazio");
+        require(ehRevisor[msg.sender], "Apenas revisores registram");
         id = proximoId++;
         Registro storage r = registros[id];
         r.id = id;
@@ -440,8 +443,8 @@ contract OathChain is Ownable {
         r.fimContestacao = 0;
         r.epocaAbertura = epoca;
         if (tamanhoJuri == 0) {
-            // modo antigo: todos os revisores votam
-            r.totalRevisores = revisoresAtivos;
+            // modo antigo: todos os revisores votam, menos o autor (que é revisor e não pode votar no próprio)
+            r.totalRevisores = revisoresAtivos - (ehRevisor[r.autor] ? 1 : 0);
             r.fimVotacao = uint64(block.timestamp) + janelaVotacao;
         } else {
             // modo júri: o sorteio acontece depois, com o hash de um bloco futuro

@@ -48,8 +48,8 @@ Nada é apagado: um veredito errado é corrigido por uma nova rodada ou por um r
 
 | Papel | Pode | Não pode |
 |---|---|---|
-| Qualquer carteira | Registrar, consultar, candidatar-se a revisor, chamar `finalizar`/`promover` quando as regras permitem | Votar sem ser sorteado |
-| Autor | Recorrer da IA, contestar 1 vez | Ser sorteado para julgar o próprio registro |
+| Qualquer carteira | Consultar, candidatar-se a revisor, chamar `finalizar`/`promover`/`confirmarIA` quando as regras permitem | Registrar (desde a v6), votar sem ser sorteado |
+| Revisor como autor | Registrar afirmações e promessas, recorrer da IA, contestar 1 vez | Ser sorteado para julgar ou votar no próprio registro |
 | Revisor | Ser sorteado, votar, recorrer, contestar | Escolher onde julga |
 | Aprendiz | Ser sorteado como observador; o voto é registrado mas não conta | Decidir o resultado |
 | Agente de IA (1 carteira) | Gravar o veredito provisório | Gravar veredito definitivo, votar |
@@ -88,7 +88,7 @@ O protótipo ainda depende de um **dono** e de **uma carteira de IA**. O caso ma
 ## 6. Resultados
 
 ### Testes automatizados
-- **83 testes dos contratos** (Hardhat; simulam também a passagem do tempo): regras de maioria, contestação, superação, IA, júri, voto aberto e secreto, candidatura, faltas.
+- **86 testes dos contratos** (Hardhat; simulam também a passagem do tempo): regras de maioria, contestação, superação, IA, júri, voto aberto e secreto, candidatura, faltas.
 - **29 testes do serviço de IA**, com servidores falsos, sem gastar cota: filtro, consolidação, saneamento, injeção de prompt, SSRF, troca de provedor, espera no limite por minuto, hash do relatório, IPFS, encerramento automático, métricas de acurácia.
 - Tamanho do contrato principal: cerca de 23,3 KB, abaixo do limite de 24 KB da rede (com `viaIR` e o otimizador).
 
@@ -132,7 +132,7 @@ O próximo passo é acrescentar afirmações difíceis, já checadas por Lupa, A
 - **IA gratuita:** erra, tem cota diária pequena e depende de provedores externos.
 - **Júri pequeno** na testnet (4 revisores): pouca diversidade no sorteio.
 - **Texto dentro do contrato:** os registros ainda guardam o texto no próprio contrato. Isso é caro numa rede principal; o caminho é guardar só o CID do IPFS.
-- **Registro aberto:** o contrato aceita registro de qualquer carteira (o site mostra o botão só para revisores); o filtro e o limite diário reduzem o spam.
+- **Registro restrito a revisores (v6):** fecha a brecha de spam pelo Etherscan, mas o público em geral só registra depois de passar pela candidatura. É uma troca consciente: menos abertura em troca de menos spam e de cota de IA protegida.
 - **Conteúdo imutável:** um registro também pode receber conteúdo ilegal ou difamatório, que não pode ser apagado. Por isso a demonstração usa apenas afirmações fictícias ou de conhecimento público, nunca vereditos sobre pessoas reais.
 - **Centralização residual:** dono e agente de IA únicos (seção 4).
 

@@ -29,6 +29,7 @@ describe("OathChain v5: júri sorteado, voto secreto e candidatura", function ()
     await livro.definirGestao(await gestao.getAddress());
     await livro.definirJuri(5, 2, true); // estes testes cobrem o voto secreto; o voto aberto tem seu próprio bloco abaixo
     for (const r of revs) await livro.definirRevisor(r.address, true);
+    await livro.definirRevisor(autor.address, true); // v6: só revisor registra (o autor nunca é sorteado)
     await gestao.definirParametros(ethers.parseEther("0.01"), 2, 1, 1 * DIA, 20, 7 * DIA, 100);
     return { livro, gestao, dono, autor, estranho, revs, aprs, sig };
   }

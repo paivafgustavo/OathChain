@@ -32,7 +32,7 @@ services:
       - key: RPC_URL
         sync: false
       - key: CONTRACT_ADDRESS
-        value: "0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2"
+        value: "0x3724764C87984e4245794985E9e81aC232C513e6"
       - key: PRIVATE_KEY_AGENTE
         sync: false
       # O endereço que o Render der ao serviço (ex.: https://oathchain-ia.onrender.com)

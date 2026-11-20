@@ -39,7 +39,7 @@ hardhat.config.js                Solidity 0.8.24, viaIR, optimizer runs 50
 Na raiz (contratos):
 ```powershell
 npx hardhat clean
-npx hardhat test                                         # esperado: 83 passing
+npx hardhat test                                         # esperado: 86 passing
 npx hardhat run scripts/deploy.js --network sepolia      # novo deploy
 $env:DEMO=1; npx hardhat run scripts/deploy.js --network sepolia   # deploy com prazos curtos (Remove-Item Env:DEMO para voltar)
 npx hardhat run scripts/setup-revisores.js --network sepolia
@@ -87,9 +87,9 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 - [ ] IPFS também para o texto dos registros (precisa de upload pelo serviço; hoje o texto fica no contrato)
 - [ ] Gravar o vídeo (roteiro em `docs/ROTEIRO-DEMO.md`)
 - [x] Relatório final em `docs/RELATORIO.md` (atualizar a seção 6 quando a acurácia estiver completa)
-- [ ] Decidir se remove `definirRevisor` (porta direta do dono; README e relatório agora dizem isso com transparência)
+- [x] Decidido manter `definirRevisor` (documentado como porta de teste)
 - [ ] Conferir o enunciado oficial do bloco 5 (individual ou em grupo, prazo)
-- [ ] Decidir se o contrato deve exigir status de revisor para registrar
+- [x] v6 (20/11): o contrato exige revisor para registrar (`_criar`); no modo "todos votam" o autor sai da conta da maioria. Decidido MANTER `definirRevisor` e o texto no contrato (não no IPFS).
 - [ ] Decidir se a finalização antecipada espera só os jurados (sem os aprendizes)
 
 ## Primeira tarefa sugerida ao abrir o Claude Code

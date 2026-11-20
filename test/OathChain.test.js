@@ -13,7 +13,8 @@ describe("OathChain", function () {
     const [dono, autor, r1, r2, r3, estranho] = await ethers.getSigners();
     const livro = await ethers.deployContract("OathChain");
     await livro.definirJuri(0, 0, false); // modo antigo: todos os revisores votam (o júri tem testes próprios)
-    for (const r of [r1, r2, r3]) await livro.definirRevisor(r.address, true);
+    // v6: só revisor registra; o autor é revisor (e nunca vota no próprio registro)
+    for (const r of [autor, r1, r2, r3]) await livro.definirRevisor(r.address, true);
     const criterios = ethers.keccak256(ethers.toUtf8Bytes("10 escolas inauguradas"));
     return { livro, dono, autor, r1, r2, r3, estranho, criterios };
   }
@@ -46,6 +47,28 @@ describe("OathChain", function () {
   }
 
   describe("registro", () => {
+    it("v6: só revisor registra afirmação ou promessa (nem pelo Etherscan dá para contornar)", async () => {
+      const { livro, estranho, criterios } = await loadFixture(deploy);
+      await expect(livro.connect(estranho).registrarAfirmacao("ipfs://a", "2025", 0)).to.be.revertedWith("Apenas revisores registram");
+      const futuro = (await time.latest()) + 1000;
+      await expect(livro.connect(estranho).registrarPromessa("ipfs://p", criterios, futuro)).to.be.revertedWith("Apenas revisores registram");
+      // virou revisor (pela candidatura ou cadastro): passa a registrar
+      await livro.definirRevisor(estranho.address, true);
+      await expect(livro.connect(estranho).registrarAfirmacao("ipfs://a", "2025", 0)).to.emit(livro, "RegistroCriado");
+    });
+
+    it("v6: revisor removido deixa de registrar", async () => {
+      const { livro, r1 } = await loadFixture(deploy);
+      await livro.definirRevisor(r1.address, false);
+      await expect(livro.connect(r1).registrarAfirmacao("ipfs://a", "2025", 0)).to.be.revertedWith("Apenas revisores registram");
+    });
+
+    it("v6: no modo 'todos votam', o autor (revisor) fica fora da conta da maioria", async () => {
+      const b = await loadFixture(comAfirmacao); // 4 revisores ativos: autor, r1, r2, r3
+      expect((await b.livro.obterRegistro(b.id)).totalRevisores).to.equal(3); // o autor não vota no próprio
+      await expect(b.livro.connect(b.autor).votar(b.id, V.Verdadeira, "j")).to.be.revertedWith("Autor nao pode votar");
+    });
+
     it("afirmação nasce 'Registrada' e só o autor abre a verificação", async () => {
       const { livro, autor, estranho } = await loadFixture(deploy);
       await livro.connect(autor).registrarAfirmacao("ipfs://a", "2025", 0);
@@ -78,17 +101,18 @@ describe("OathChain", function () {
 
     it("conta revisores ativos sem duplicar", async () => {
       const { livro, estranho } = await loadFixture(deploy);
-      expect(await livro.revisoresAtivos()).to.equal(3);
+      expect(await livro.revisoresAtivos()).to.equal(4); // autor + r1, r2, r3
       await livro.definirRevisor(estranho.address, true);
       await livro.definirRevisor(estranho.address, true); // repetido: ignora
-      expect(await livro.revisoresAtivos()).to.equal(4);
+      expect(await livro.revisoresAtivos()).to.equal(5);
       await livro.definirRevisor(estranho.address, false);
-      expect(await livro.revisoresAtivos()).to.equal(3);
+      expect(await livro.revisoresAtivos()).to.equal(4);
     });
 
     it("não abre verificação com revisores insuficientes", async () => {
       const [, autor] = await ethers.getSigners();
       const livro = await ethers.deployContract("OathChain");
+      await livro.definirRevisor(autor.address, true); // só revisor registra; 1 revisor não basta para verificar
       await livro.connect(autor).registrarAfirmacao("ipfs://a", "2025", 0);
       await expect(livro.connect(autor).abrirVerificacao(1)).to.be.revertedWith("Revisores insuficientes");
     });
@@ -369,14 +393,14 @@ describe("OathChain", function () {
       await b.livro.finalizar(id);
     }
 
-    // #1 finalizada como Verdadeira (autor), #2 corrige #1 (estranho), ainda registrada
+    // #1 finalizada como Verdadeira (autor), #2 corrige #1 (o próprio autor, que é revisor), ainda registrada
     async function comCorrecao() {
       const b = await deploy();
       await b.livro.connect(b.autor).registrarAfirmacao("juros em 2025: 1,2 tri", "2025", 0);
       await b.livro.connect(b.autor).abrirVerificacao(1);
       await finalizarAfirmacao(b, 1, V.Verdadeira);
-      await b.livro.connect(b.estranho).registrarAfirmacao("juros em 2025: 0,9 tri (dado revisado)", "2025", 1);
-      await b.livro.connect(b.estranho).abrirVerificacao(2);
+      await b.livro.connect(b.autor).registrarAfirmacao("juros em 2025: 0,9 tri (dado revisado)", "2025", 1);
+      await b.livro.connect(b.autor).abrirVerificacao(2);
       return b;
     }
 
@@ -436,7 +460,7 @@ describe("OathChain", function () {
       await b.livro.finalizar(2);
       expect((await b.livro.obterRegistro(1)).superadaPor).to.equal(2);
 
-      await b.livro.connect(b.estranho).contestar(2, "m"); // autor da correção contesta
+      await b.livro.connect(b.autor).contestar(2, "m"); // autor da correção contesta
       await b.livro.connect(b.r1).votar(2, V.Falsa, "j");
       await b.livro.connect(b.r2).votar(2, V.Falsa, "j");
       await expect(b.livro.finalizar(2)).to.emit(b.livro, "SuperacaoRevertida").withArgs(1, 2);
@@ -446,8 +470,8 @@ describe("OathChain", function () {
     it("a primeira correção aprovada vale; uma segunda não sobrescreve", async () => {
       const b = await loadFixture(comCorrecao);
       // segunda correção do mesmo registro #1
-      await b.livro.connect(b.estranho).registrarAfirmacao("outra correção", "2025", 1);
-      await b.livro.connect(b.estranho).abrirVerificacao(3);
+      await b.livro.connect(b.autor).registrarAfirmacao("outra correção", "2025", 1);
+      await b.livro.connect(b.autor).abrirVerificacao(3);
       for (const id of [2, 3]) {
         await b.livro.connect(b.r1).votar(id, V.Verdadeira, "j");
         await b.livro.connect(b.r2).votar(id, V.Verdadeira, "j");
@@ -459,16 +483,16 @@ describe("OathChain", function () {
 
   describe("lista de revisores", () => {
     it("lista os revisores sem repetir e guarda desde quando entraram", async () => {
-      const { livro, r1, r2, r3, estranho } = await loadFixture(deploy);
+      const { livro, autor, r1, r2, r3, estranho } = await loadFixture(deploy);
       let lista = await livro.obterRevisores();
-      expect(lista).to.deep.equal([r1.address, r2.address, r3.address]);
+      expect(lista).to.deep.equal([autor.address, r1.address, r2.address, r3.address]);
       expect(await livro.revisorDesde(r1.address)).to.be.gt(0);
 
       await livro.definirRevisor(estranho.address, true);
       await livro.definirRevisor(estranho.address, false);
       await livro.definirRevisor(estranho.address, true); // volta: não duplica
       lista = await livro.obterRevisores();
-      expect(lista.length).to.equal(4);
+      expect(lista.length).to.equal(5);
       expect(await livro.ehRevisor(estranho.address)).to.equal(true);
     });
   });
@@ -615,14 +639,14 @@ describe("OathChain", function () {
     });
 
     it("correção aprovada pela IA (sem recurso) supera o registro antigo", async () => {
-      const { livro, agente, autor, estranho, r1, r2 } = await loadFixture(comAgente);
+      const { livro, agente, autor, r1, r2, r3 } = await loadFixture(comAgente);
       // #1 finalizada por humanos
       await livro.connect(autor).abrirVerificacao(1);
       await livro.connect(r1).votar(1, V.Verdadeira, "j");
       await livro.connect(r2).votar(1, V.Verdadeira, "j");
       await livro.finalizar(1);
       // #2 corrige #1; a IA aprova e ninguém recorre
-      await livro.connect(estranho).registrarAfirmacao("Dado revisado em 2025.", "2025", 1);
+      await livro.connect(r3).registrarAfirmacao("Dado revisado em 2025.", "2025", 1);
       await livro.connect(agente).registrarVerificacaoIA(2, V.Verdadeira, 92, HASH, URL);
       await time.increase(3 * 86400 + 1);
       await expect(livro.confirmarIA(2)).to.emit(livro, "Superada").withArgs(1, 2);

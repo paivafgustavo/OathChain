@@ -20,6 +20,6 @@ export const EXPLORADOR = "https://sepolia.etherscan.io";
 // Usado para LER os dados quando a pessoa não tem a MetaMask instalada
 export const RPC_PUBLICO = "https://ethereum-sepolia-rpc.publicnode.com";
 
-// true  = só revisores veem o botão de registrar (decisão do projeto: evita registros duplicados)
-// false = qualquer carteira conectada pode registrar (como o contrato permite hoje)
+// true = só revisores veem o botão de registrar. Desde a v6 o CONTRATO também exige isso
+// ("Apenas revisores registram"), então mudar para false só mostraria um botão que falha.
 export const SO_REVISOR_REGISTRA = true;
