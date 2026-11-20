@@ -93,7 +93,10 @@ O protótipo ainda depende de um **dono** e de **uma carteira de IA**. O caso ma
 - Tamanho do contrato principal: cerca de 23,3 KB, abaixo do limite de 24 KB da rede (com `viaIR` e o otimizador).
 
 ### Ciclo real na Sepolia
-- Contrato: `0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2`.
+- Contratos atuais (**v6**, publicados em 20/11/2026 e verificados no Etherscan):
+  - OathChain: [`0x3724764C87984e4245794985E9e81aC232C513e6`](https://sepolia.etherscan.io/address/0x3724764C87984e4245794985E9e81aC232C513e6#code)
+  - GestaoRevisores: [`0xbeA950a0b9575e0944D8a945a9f18b00abd1c98B`](https://sepolia.etherscan.io/address/0xbeA950a0b9575e0944D8a945a9f18b00abd1c98B#code)
+- Os testes em produção descritos abaixo foram feitos na **v5** ([`0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2`](https://sepolia.etherscan.io/address/0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2#code)), que continua na rede como histórico. A v6 só acrescenta a exigência de revisor para registrar; o resto do fluxo é idêntico.
 - Primeira verificação real: afirmação #2, avaliada pela IA como Verdadeira com 36% de confiança → abaixo do limite → foi ao júri; os 4 jurados sorteados votaram Verdadeira.
 - Ciclo completo em produção (afirmação #4): registrada pelo site publicado na Vercel → verificada pelo serviço hospedado no Render (Inconclusiva, 43%), com o relatório no IPFS e o hash conferido → foi ao júri → os jurados votaram → o serviço encerrou a votação sozinho assim que todos votaram.
 - Site: <https://oath-chain.vercel.app>.

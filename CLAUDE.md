@@ -50,7 +50,7 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 
 ## Estado atual (20/11/2026)
 - **Publicado:** site https://oath-chain.vercel.app (Vercel, root `frontend`), serviço de IA no Render (`render.yaml`, relatórios no IPFS via Pinata, UptimeRobot em /saude). Ciclo completo em produção validado no registro #4. Rodar o serviço local junto com o Render duplica o trabalho: não fazer.
-- **Contrato OathChain na Sepolia:** `0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2` (v5 com voto aberto). O endereço da GestaoRevisores está em `deployments/sepolia.json`.
+- **Contratos v6 na Sepolia (20/11/2026, verificados no Etherscan):** OathChain `0x3724764C87984e4245794985E9e81aC232C513e6`, GestaoRevisores `0xbeA950a0b9575e0944D8a945a9f18b00abd1c98B` (bloco 12177989). Revisores de teste cadastrados, agente autorizado, Render e Vercel apontando para a v6. A v5 (`0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2`) ficou como histórico dos testes de produção (registros 1 a 4).
 - Revisores de teste cadastrados com `setup-revisores.js` (conferir se os 5 passaram; o RPC caiu uma vez no meio).
 - Um registro foi enviado e estava em "Aguardando os 4 agentes de IA": o serviço de IA precisa (a) estar rodando, (b) ter `CONTRACT_ADDRESS` apontando para o contrato novo, (c) usar uma carteira (`PRIVATE_KEY_AGENTE`) **autorizada no contrato** com `definirAgenteVerificador(endereco)` e com ETH de teste. Se o deploy não usou `AGENTE_VERIFICADOR`, o agente ainda não foi autorizado: verificar isso primeiro.
 - Tudo foi testado localmente (83 testes de contrato, 11 do serviço, e2e do site). **Ainda não testado em ambiente real:** IA com chaves reais (Groq/Gemini/Firecrawl), hospedagem na Vercel e o ciclo completo na Sepolia com o contrato novo.
