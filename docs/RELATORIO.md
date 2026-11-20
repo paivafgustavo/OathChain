@@ -95,18 +95,32 @@ O protótipo ainda depende de um **dono** e de **uma carteira de IA**. O caso ma
 ### Ciclo real na Sepolia
 - Contrato: `0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2`.
 - Primeira verificação real: afirmação #2, avaliada pela IA como Verdadeira com 36% de confiança → abaixo do limite → foi ao júri; os 4 jurados sorteados votaram Verdadeira.
+- Ciclo completo em produção (afirmação #4): registrada pelo site publicado na Vercel → verificada pelo serviço hospedado no Render (Inconclusiva, 43%), com o relatório no IPFS e o hash conferido → foi ao júri → os jurados votaram → o serviço encerrou a votação sozinho assim que todos votaram.
+- Site: <https://oath-chain.vercel.app>.
 
-### Acurácia da IA (parcial)
-Teste com `npm run acuracia` sobre 15 afirmações de veredito conhecido (fatos públicos com fonte oficial, opiniões e previsões). Resultado medido até agora, **6 de 15**, porque a cota diária gratuita do Gemini interrompeu o resto:
+### Acurácia da IA
+Teste com `npm run acuracia` sobre 15 afirmações de veredito conhecido: 7 verdadeiras e 5 falsas (fatos públicos com fonte oficial, como IBGE, Constituição e OMS), mais 3 opiniões/previsões. Modelos: Groq `openai/gpt-oss-120b` e Gemini Flash, nos planos gratuitos. Por causa da cota diária, a medição foi feita em duas rodadas (19 e 20/11/2026), com o mesmo código.
 
 | Métrica | Resultado |
 |---|---|
-| Precisão quando a IA decide sozinha (confiança ≥ 70%) | 100% (2 de 2) |
-| Erros graves (Verdadeira ↔ Falsa) | 0 |
+| **Precisão quando a IA decide sozinha** (confiança ≥ 70%, o que vira veredito provisório) | **100%** (10 de 10) |
+| Erros graves (Verdadeira ↔ Falsa) | **0** |
+| Cobertura: fatos decididos sem precisar do júri | 83,3% (10 de 12) |
+| Acerto geral nos fatos | 83,3% (os 2 restantes saíram "Inconclusiva", nenhum errado) |
+| Afirmações falsas identificadas | 5 de 5 (confiança de 72% a 93%) |
 | Opiniões/previsões barradas pelo filtro | 100% (3 de 3) |
 | Fatos barrados por engano pelo filtro | 0 |
 
-**Leitura:** a IA é conservadora. Quando as fontes encontradas não dizem algo com clareza, ela responde "Inconclusiva" e o caso vai ao júri, em vez de arriscar. **Limite do teste:** a amostra é pequena e os itens não foram checados por agências; o próximo passo é completar a base e acrescentar afirmações checadas por Lupa, Aos Fatos ou Comprova.
+As duas "Inconclusivas" ("Brasília é a capital desde 1960" e "a seleção venceu a Copa 5 vezes") são verdadeiras, mas o Analista e o Contraditor julgaram que as fontes encontradas não confirmavam o fato com clareza. Elas iriam ao júri humano.
+
+**Leitura:** a IA é conservadora. Quando as fontes não dizem algo com clareza, ela responde "Inconclusiva" e passa a decisão aos humanos, em vez de arriscar. É o comportamento desejado, porque um "não sei" custa menos que um erro com confiança alta.
+
+**Limites do teste:**
+1. A amostra é pequena (15 itens).
+2. São fatos fáceis e sem controvérsia, então o resultado é um **teto otimista**.
+3. Os itens não foram checados por agências.
+
+O próximo passo é acrescentar afirmações difíceis, já checadas por Lupa, Aos Fatos ou Comprova, e acompanhar a métrica a cada mudança de modelo.
 
 **Dois defeitos encontrados pelo próprio teste e corrigidos:**
 - alguns modelos respondiam a confiança na escala de 0 a 1 (0,95 era lido como 1%);

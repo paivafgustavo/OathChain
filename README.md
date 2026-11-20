@@ -577,6 +577,21 @@ Depois rode o mesmo comando sem `DEMO` para voltar ao normal (7 dias / 7 dias / 
 
 **83 testes de contrato** (simulam também a passagem do tempo) e **29 testes do serviço de IA** (com servidores falsos, sem gastar cota), incluindo o filtro de fato vs. opinião, as métricas de acurácia e o envio ao IPFS.
 
+### Acurácia da IA (`npm run acuracia`)
+
+15 afirmações de veredito conhecido (7 verdadeiras, 5 falsas, 3 opiniões/previsões), com modelos gratuitos:
+
+| Métrica | Resultado |
+|---|---|
+| **Precisão quando a IA decide sozinha** (confiança ≥ 70%) | **100%** (10 de 10) |
+| Erros graves (Verdadeira ↔ Falsa) | **0** |
+| Fatos decididos sem precisar do júri | 83% (10 de 12; os outros 2 saíram "Inconclusiva" e iriam ao júri) |
+| Opiniões/previsões barradas pelo filtro | 3 de 3, e nenhum fato barrado por engano |
+
+São fatos fáceis e sem controvérsia, então é um teto otimista; detalhes e limites em [docs/RELATORIO.md](docs/RELATORIO.md).
+
+### Testes automatizados
+
 | Área | O que é verificado |
 |------|--------------------|
 | **Registro** | Afirmação e promessa; prazo no passado; critérios vazios; período de referência obrigatório. |
@@ -625,8 +640,10 @@ O fluxo do site também foi testado de ponta a ponta em um navegador automatizad
 - [x] Roteiro da demonstração com janelas curtas ([docs/ROTEIRO-DEMO.md](docs/ROTEIRO-DEMO.md))
 - [x] Serviço testado com chaves reais na Sepolia (IA → júri → encerramento automático)
 - [x] Relatório final ([docs/RELATORIO.md](docs/RELATORIO.md)) e guia de publicação ([docs/HOSPEDAGEM.md](docs/HOSPEDAGEM.md))
-- [ ] Publicar site (Vercel) e serviço (Render), verificar contratos no Etherscan
-- [ ] Completar o teste de acurácia e acrescentar afirmações checadas por agências
+- [x] Site na Vercel ([oath-chain.vercel.app](https://oath-chain.vercel.app)) e serviço de IA no Render
+- [ ] Verificar os contratos no Etherscan
+- [x] Teste de acurácia completo (15 de 15: 100% de precisão quando decide sozinha, 0 erros graves)
+- [ ] Acrescentar afirmações difíceis checadas por agências à base de acurácia
 - [ ] IPFS também para o texto dos registros (hoje fica no contrato)
 - [ ] Gravar o vídeo
 

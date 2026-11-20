@@ -48,7 +48,8 @@ npx hardhat run scripts/janelas.js --network sepolia
 Site: `cd frontend; npm install; npm run dev` (local) / `npm run build` (saída em `dist`).
 Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) | `npm test` (27 testes) | `npm run diagnostico` | `npm run acuracia -- --max 5` | `npm run verificar -- --texto "..." --assunto Meio_Ambiente --ref 2024` (CLI de teste).
 
-## Estado atual (19/11/2026)
+## Estado atual (20/11/2026)
+- **Publicado:** site https://oath-chain.vercel.app (Vercel, root `frontend`), serviço de IA no Render (`render.yaml`, relatórios no IPFS via Pinata, UptimeRobot em /saude). Ciclo completo em produção validado no registro #4. Rodar o serviço local junto com o Render duplica o trabalho: não fazer.
 - **Contrato OathChain na Sepolia:** `0xd9C6EAFE90B59B2e6a6ca9B780A1f2E5Ae34A2D2` (v5 com voto aberto). O endereço da GestaoRevisores está em `deployments/sepolia.json`.
 - Revisores de teste cadastrados com `setup-revisores.js` (conferir se os 5 passaram; o RPC caiu uma vez no meio).
 - Um registro foi enviado e estava em "Aguardando os 4 agentes de IA": o serviço de IA precisa (a) estar rodando, (b) ter `CONTRACT_ADDRESS` apontando para o contrato novo, (c) usar uma carteira (`PRIVATE_KEY_AGENTE`) **autorizada no contrato** com `definirAgenteVerificador(endereco)` e com ETH de teste. Se o deploy não usou `AGENTE_VERIFICADOR`, o agente ainda não foi autorizado: verificar isso primeiro.
@@ -78,7 +79,7 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 **A fazer:**
 - [ ] Destravar a verificação da IA: preencher `PRIVATE_KEY_AGENTE`, rodar `scripts/autorizar-agente.js`, `npm run diagnostico`, `npm start`
 - [ ] Testar o ciclo completo na Sepolia (IA, júri, votar, finalizar)
-- [ ] Testar a IA com chaves reais (Groq, Gemini, Firecrawl) e rodar `npm run acuracia`
+- [x] Acurácia completa em 20/11: 15/15 medidas, precisão automática 100% (10/10), 0 erros graves, cobertura 83%, filtro 3/3 (RELATORIO seção 6 e README atualizados)
 - [ ] Acrescentar afirmações checadas por agências (Lupa, Aos Fatos, Comprova) em `servico/dados/acuracia.json`
 - [ ] Hospedar o serviço no Render (`render.yaml` pronto; passo a passo em `docs/HOSPEDAGEM.md`; precisa de PINATA_JWT porque o disco do Render é apagado; UptimeRobot em /saude para não dormir; o serviço lê PORT)
 - [ ] Publicar o site na Vercel (passo a passo em `docs/HOSPEDAGEM.md`)
