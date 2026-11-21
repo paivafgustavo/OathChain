@@ -21,11 +21,14 @@ export default function Mapa({ d }) {
   const max = Math.max(1, ...Object.values(contagem));
   const semLocal = registros.filter((r) => !r.uf).length;
 
-  const filtrados = registros.filter(
-    (r) => (!sel.code || r.uf === sel.code) && (!sel.city || NM(r.cidade || "") === NM(sel.city))
+  const nacional = sel.code === "BR"; // "Brasil (nacional)": registros sem estado definido
+  const filtrados = registros.filter((r) =>
+    nacional ? !r.uf : (!sel.code || r.uf === sel.code) && (!sel.city || NM(r.cidade || "") === NM(sel.city))
   );
   const porStatus = Object.keys(ST).map((k) => ({ k, n: filtrados.filter((r) => statusDe(r, agora) === k).length }));
-  const nome = sel.city ? `${sel.city} · ${sel.code}` : sel.code ? MAP[sel.code].n : "Brasil";
+  const nome = nacional ? "Brasil (nacional)" : sel.city ? `${sel.city} · ${sel.code}` : sel.code ? MAP[sel.code].n : "Todo o país";
+  const escolherBrasil = () => { setQ(""); setSel({ code: "BR", city: null }); };
+  const verTudo = () => { setQ(""); setSel({ code: null, city: null }); };
 
   function digitou(valor) {
     setQ(valor);
@@ -41,7 +44,7 @@ export default function Mapa({ d }) {
     <>
       <h2>Procure por estado ou cidade</h2>
       <p className="mut" style={{ maxWidth: "62ch" }}>
-        Clique num estado do mapa ou digite o nome de um estado ou de uma capital. Quanto mais clara a cor, mais registros.
+        Clique num estado, digite um estado ou uma capital, ou veja as notícias nacionais. Quanto mais dourado, mais registros.
       </p>
       <div className="search">
         <input list="dl" autoComplete="off" aria-label="Estado ou cidade" placeholder="Digite um estado ou cidade, ex.: Goiás ou Goiânia" value={q} onChange={(e) => digitou(e.target.value)} />
@@ -51,10 +54,16 @@ export default function Mapa({ d }) {
         </datalist>
       </div>
 
+      <div className="map-esc" aria-label="Abrangência">
+        <button aria-pressed={!sel.code} onClick={verTudo}>Todo o país</button>
+        <button aria-pressed={nacional} onClick={escolherBrasil}>Brasil (nacional) · {semLocal}</button>
+      </div>
+
       <div className="mapg">
         <div className="card mapw">
-          <svg viewBox="0 0 423 435" role="group" aria-label="Mapa do Brasil por estados">
-            {Object.entries(MAP).map(([c, m]) => {
+          <svg viewBox="0 0 423 435" role="group" aria-label="Mapa do Brasil por estados" className={nacional ? "pais-sel" : undefined}>
+            {/* o estado escolhido é desenhado por último, para a borda dourada ficar inteira por cima dos vizinhos */}
+            {Object.entries(MAP).sort(([a], [b]) => (a === sel.code) - (b === sel.code)).map(([c, m]) => {
               const n = contagem[c] || 0;
               const t = n / max;
               return (
@@ -65,7 +74,7 @@ export default function Mapa({ d }) {
                   tabIndex={0}
                   role="button"
                   aria-label={`${m.n}: ${n} registros`}
-                  style={{ fill: `hsl(40 ${30 + t * 45}% ${16 + t * 38}%)` }}
+                  style={{ fill: n === 0 ? "#1E3260" : `hsl(38 ${45 + t * 30}% ${32 + t * 24}%)` }}
                   onClick={() => { setQ(m.n); setSel({ code: c, city: null }); }}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setQ(m.n); setSel({ code: c, city: null }); } }}
                 >
@@ -82,10 +91,10 @@ export default function Mapa({ d }) {
         </div>
 
         <div className="card">
-          <small>{sel.city ? "Cidade" : sel.code ? "Estado" : "Visão geral"}</small>
-          <h3 style={{ font: "600 32px Newsreader,serif", margin: "4px 0 10px" }}>{nome}</h3>
+          <small>{nacional ? "Abrangência nacional" : sel.city ? "Cidade" : sel.code ? "Estado" : "Visão geral"}</small>
+          <h3 style={{ font: "600 32px Sora,sans-serif", margin: "4px 0 10px" }}>{nome}</h3>
           <div className="stat">{filtrados.length}</div>
-          <small>registros {sel.code ? "nesta região" : "no país todo"}</small>
+          <small>registros {nacional ? "sobre o Brasil como um todo" : sel.code ? "nesta região" : "no país todo"}</small>
           {filtrados.length > 0 && (
             <div className="sb">
               {porStatus.filter((p) => p.n > 0).map((p) => (
@@ -104,12 +113,17 @@ export default function Mapa({ d }) {
               </span>
             ))}
           </div>
-          <h3 style={{ marginTop: 8 }}>Estante de {sel.city || (sel.code ? MAP[sel.code].n : "todo o país")}</h3>
+          <h3 style={{ marginTop: 8 }}>Estante de {nacional ? "notícias nacionais" : sel.city || (sel.code ? MAP[sel.code].n : "todo o país")}</h3>
           <Prateleira registros={filtrados.slice(0, 12)} agora={agora} vazio="Nenhum registro nesta região ainda." />
           {filtrados[0] && (
             <div className="cta"><Ir className="main-btn" para={"registro/" + filtrados[0].id}>Abrir registro</Ir></div>
           )}
-          {semLocal > 0 && <p className="mut" style={{ fontSize: 14 }}>{semLocal} registro(s) sem estado definido não aparecem no mapa.</p>}
+          {semLocal > 0 && !nacional && (
+            <p className="mut" style={{ fontSize: 14 }}>
+              {semLocal} {semLocal === 1 ? "registro nacional" : "registros nacionais"} (sem estado) não {semLocal === 1 ? "aparece" : "aparecem"} no mapa.{" "}
+              <button className="lk-btn" onClick={escolherBrasil}>Ver notícias nacionais</button>
+            </p>
+          )}
         </div>
       </div>
     </>

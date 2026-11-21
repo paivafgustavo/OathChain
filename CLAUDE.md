@@ -63,6 +63,14 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 - Serviço de IA: 4 agentes (debate), provas de Google Fact Check, Wikipedia, Firecrawl (1.000 créditos/mês grátis) e DuckDuckGo de reserva; defesas contra prompt injection e SSRF (`urlSegura`); limites por dia/IP; relatório com hash keccak256 do texto exato, guardado na blockchain.
 - Site: o "sal" do voto secreto vem de `signer.signMessage` (determinístico); `d.agora` usa o relógio do navegador.
 
+## Site (redesenho de 21/11)
+- Menu com 3 itens: Início, Explorar, Participar. Rotas antigas (#estante, #mapa, #linha, #assuntos, #verificar, #revisores, #revisor) viram atalhos para as abas novas (App.jsx).
+- Paleta da logo (azul-noite #0B1730, ouro #DAA14E, creme #F3EAD3), títulos em Sora. Tokens em estilo.css (:root).
+- Landing: abertura com CSS scroll-driven animations (inicio.css). A 1ª cena usa scroll(root) em px, porque o menu fixo atrasava a view-timeline. Sem suporte (Firefox) ou com reduzir movimento, as cenas aparecem prontas.
+- Cena.jsx: 1 ilustração SVG animada (SMIL) por assunto, usada nas caixas, na sala e no fundo das prateleiras; sem animação se o sistema pede reduzir movimento.
+- Removidas: Estante.jsx e Verificar.jsx (conteúdo foi para Explorar). Tirada a métrica "de acordo com a maioria" do painel do revisor (contrariava a decisão 3).
+- Arquivos do frontend usam CRLF: scripts de edição precisam normalizar as quebras.
+
 ## Armadilhas já encontradas
 - **Tamanho do contrato:** limite de 24.576 bytes; hoje ~23,3 KB com `viaIR` + `runs: 50`. Qualquer função nova pode estourar: conferir após mudar.
 - **Alchemy + conta com delegação (EIP-7702):** erro `in-flight transaction limit reached for delegated accounts`. Os scripts já esperam e tentam de novo; a solução definitiva é usar uma conta comum para deploy/administração.

@@ -475,7 +475,9 @@ OathChain/
 ├── frontend/
 │   └── src/
 │       ├── App.jsx, main.jsx
-│       ├── paginas/             # Início, Estante, Verificar, Registro, Mapa, Revisores, SejaRevisor, Linha, Assuntos
+│       ├── paginas/             # Início (abertura comandada pela rolagem), Explorar (abas Lista, Estante,
+│       │                        #   Assuntos, Mapa, Linha do tempo), Registro, Participar, Registrar
+│       ├── Cena.jsx, Simbolo.jsx # ilustrações animadas dos assuntos e o símbolo da logo em vetor
 │       ├── paineis.jsx          # painel da IA e painel do júri
 │       ├── useDados.js, oathchain.js, config.js
 │       ├── deployment.json      # endereços + bloco (o deploy atualiza sozinho)

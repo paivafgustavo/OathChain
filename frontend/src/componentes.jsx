@@ -58,13 +58,16 @@ export function Prateleira({ registros, agora, vazio = "Nenhum registro aqui ain
 }
 
 // Filtros por situação (as "pílulas")
-export function Filtro({ valor, aoMudar }) {
+// presentes (opcional): só as situações que aparecem nos registros; a escolhida sempre fica visível
+export function Filtro({ valor, aoMudar, presentes }) {
+  const itens = Object.entries(ST).filter(([k]) => !presentes || presentes.has(k) || k === valor);
+  if (presentes && itens.length < 2 && valor === "all") return null;
   return (
-    <div className="pills">
+    <div className="pills" aria-label="Filtrar por situação">
       <button aria-pressed={valor === "all"} onClick={() => aoMudar("all")}>
         Todos
       </button>
-      {Object.entries(ST).map(([k, [nome, cor]]) => (
+      {itens.map(([k, [nome, cor]]) => (
         <button key={k} aria-pressed={valor === k} onClick={() => aoMudar(k)}>
           <i style={{ background: `var(${cor})` }} />
           {nome}

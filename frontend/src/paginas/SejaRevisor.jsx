@@ -5,7 +5,7 @@ import { abreviar, executar, formatarDuracao, mensagemDeErro, restante } from ".
 
 const ESTADOS = ["Não candidato", "Aprendiz (em prova)", "Revisor", "Saiu"];
 
-export default function SejaRevisor({ d }) {
+export default function SejaRevisor({ d, embutido = false }) {
   const [info, setInfo] = useState(null);
   const [lista, setLista] = useState([]);
   const [ocupado, setOcupado] = useState(false);
@@ -59,8 +59,8 @@ export default function SejaRevisor({ d }) {
 
   return (
     <>
-      <h2>Seja revisor</h2>
-      <p className="mut" style={{ maxWidth: "66ch" }}>
+      {!embutido && <h2>Seja revisor</h2>}
+      <p className="mut" style={{ maxWidth: "66ch", display: embutido ? "none" : undefined }}>
         Ninguém precisa pedir permissão a uma pessoa: você se candidata, passa por um período de prova observando júris reais e é promovido automaticamente.
         O contrato <b>nunca</b> compara o seu voto com o da maioria. Você é avaliado por <b>participar com fundamentação</b> (justificativa e link de fonte), não por concordar.
       </p>
@@ -73,7 +73,7 @@ export default function SejaRevisor({ d }) {
         <div className="rvg">
           <div className="card">
             <small>Sua situação</small>
-            <h3 style={{ font: "600 28px Newsreader,serif", margin: "4px 0 8px" }}>{d.conta ? abreviar(d.conta) : "Conecte a carteira"}</h3>
+            <h3 style={{ font: "600 28px Sora,sans-serif", margin: "4px 0 8px" }}>{d.conta ? abreviar(d.conta) : "Conecte a carteira"}</h3>
             {d.conta && <span className="tag">{d.euSouRevisor && (!meu || meu.estado === 0) ? "Revisor (cadastrado pelo dono)" : ESTADOS[meu?.estado || 0]}</span>}
 
             {meu && meu.estado === 1 && (

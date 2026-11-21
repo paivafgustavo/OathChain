@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
-import { T, ASSUNTOS } from "../dados";
-import { Prateleira, Filtro, Ir, irPara } from "../componentes";
+import { useState } from "react";
+import { T, SUB, ASSUNTOS } from "../dados";
+import { Prateleira, Filtro, irPara } from "../componentes";
 import { statusDe } from "../oathchain";
+import Cena from "../Cena";
+import { useMovimentoReduzido } from "../movimento";
 
 const pvDe = (registros, a) => {
   const fin = registros.filter((r) => r.assunto === a && r.estado === 2);
@@ -9,71 +11,82 @@ const pvDe = (registros, a) => {
   return Math.round((fin.filter((r) => r.resultado === 1 || r.resultado === 4).length / fin.length) * 100);
 };
 
+// Caixas dos assuntos, cada uma com a sua cena (aba "Assuntos" do Explorar)
 export function Hub({ d }) {
   const lista = [...ASSUNTOS, ...(d.registros.some((r) => r.assunto === "Outros") ? ["Outros"] : [])];
   return (
-    <>
-      <h2>Assuntos</h2>
-      <p className="mut">Cada assunto tem a sua própria sala. Escolha um para entrar.</p>
-      <div className="hub">
-        {lista.map((k) => {
-          const t = T[k];
-          const n = d.registros.filter((r) => r.assunto === k).length;
-          return (
-            <button key={k} className="hubc" onClick={() => irPara("assunto/" + encodeURIComponent(k))}
-              style={{ "--acc": t.a, "--pat": t.p, "--g": t.g }}>
-              <span className="e2">{t.e}</span>
+    <div className="hub">
+      {lista.map((k, i) => {
+        const n = d.registros.filter((r) => r.assunto === k).length;
+        return (
+          <button key={k} className="hubc inclina" style={{ animationDelay: i * 60 + "ms" }} onClick={() => irPara("assunto/" + encodeURIComponent(k))}>
+            <span className="hubc-cena"><Cena tema={k} /></span>
+            <span className="hubc-txt">
               <b>{k}</b>
-              <small style={{ color: "#ffffffbb" }}>{t.k}</small>
-              <small style={{ color: t.a }}>{n} {n === 1 ? "registro" : "registros"}</small>
-            </button>
-          );
-        })}
-      </div>
-      <Ir className="main-btn" para="estante">Voltar à estante</Ir>
-    </>
+              <small>{n} {n === 1 ? "registro" : "registros"}</small>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
+// Sala de um assunto: a cena grande no topo e a prateleira com a mesma cena na parede
 export function Sala({ d, nome }) {
   const [filtro, setFiltro] = useState("all");
+  const [sub, setSub] = useState("");
+  const parado = useMovimentoReduzido();
   const assunto = T[nome] ? nome : "Outros";
   const t = T[assunto];
 
-  // Cada sala tem o seu tom de fundo
-  useEffect(() => {
-    document.body.style.setProperty("--tint", t.t);
-    return () => document.body.style.removeProperty("--tint");
-  }, [assunto]);
-
   const todos = d.registros.filter((r) => r.assunto === assunto);
-  const lista = todos.filter((r) => filtro === "all" || statusDe(r, d.agora) === filtro);
+  const lista = todos.filter((r) => (filtro === "all" || statusDe(r, d.agora) === filtro) && (!sub || r.subassunto === sub));
   const pv = pvDe(d.registros, assunto);
   const linhas = [];
   for (let i = 0; i < Math.max(lista.length, 1); i += 10) linhas.push(lista.slice(i, i + 10));
 
   return (
-    <div style={{ "--acc": t.a, "--board": t.b, "--pat": t.p, "--g": t.g }}>
-      <div className="ban">
-        <h2>{assunto}</h2>
-        <p>{t.k}</p>
-        <div className="ct">{todos.length} {todos.length === 1 ? "registro" : "registros"} · {pv === null ? "sem vereditos ainda" : pv + "% Verdadeiros"}</div>
-        <div dangerouslySetInnerHTML={{ __html: t.d }} />
-      </div>
-      <div className="card">
-        <Filtro valor={filtro} aoMudar={setFiltro} />
-        <div className="row-wrap">
-          {linhas.map((l, i) => (
-            <div className="shelf" key={i}>
-              <Prateleira registros={l} agora={d.agora} vazio="Nenhum registro aqui ainda." />
-            </div>
-          ))}
+    <>
+      <button className="voltar" onClick={() => irPara("explorar/assuntos")}>
+        <span aria-hidden="true">←</span> Todos os assuntos
+      </button>
+
+      <section className="sala-ban">
+        <Cena tema={assunto} />
+        <div className="sala-ban-txt">
+          <p className="etq">Assunto</p>
+          <h1>{assunto}</h1>
+          <p>{t.k}</p>
+          <p className="sala-ct">
+            {todos.length} {todos.length === 1 ? "registro" : "registros"} · {pv === null ? "sem vereditos ainda" : pv + "% Verdadeiros"}
+          </p>
         </div>
+      </section>
+
+      <div className="subtemas" aria-label="Subtemas">
+        <button aria-pressed={!sub} onClick={() => setSub("")}>Todos</button>
+        {(SUB[assunto] || []).map((s) => (
+          <button key={s} aria-pressed={sub === s} onClick={() => setSub(sub === s ? "" : s)}>{s}</button>
+        ))}
       </div>
-      <div className="cta">
-        <Ir className="main-btn" para="assuntos">Ver outros assuntos</Ir>{" "}
-        <Ir className="wallet" para="estante">Voltar à estante</Ir>
-      </div>
-    </div>
+      <Filtro valor={filtro} aoMudar={setFiltro} presentes={new Set(todos.map((r) => statusDe(r, d.agora)))} />
+
+      <h2 className="sala-sub">A prateleira de {assunto}</h2>
+      {linhas.map((l, i) => (
+        <div className="estante-moldura grande" key={i}>
+          <div className="estante-fundo"><Cena tema={assunto} /></div>
+          {assunto === "Meio Ambiente" && !parado && (
+            <>
+              <span className="folha" style={{ left: "18%", background: "#3FA86F" }} />
+              <span className="folha" style={{ left: "46%", background: "#2E8B5E", animationDelay: "-3s" }} />
+              <span className="folha" style={{ left: "74%", background: "#DAA14E", animationDelay: "-6s" }} />
+            </>
+          )}
+          <Prateleira registros={l} agora={d.agora} vazio="Nenhum registro aqui ainda." />
+        </div>
+      ))}
+      <p className="mut" style={{ fontSize: 14, marginTop: 12 }}>Passe o mouse num livro para puxá-lo da prateleira. Clique para abrir o registro.</p>
+    </>
   );
 }
