@@ -98,7 +98,7 @@ export default function Inicio({ d }) {
         </div>
       </section>
 
-      {/* 4) Atravesse o anel e entre na estante */}
+      {/* 4) Passe pelo anel e entre na estante */}
       <section className="trilho tr-d">
         <div className="palco">
           <div className="d-estante">
@@ -114,7 +114,7 @@ export default function Inicio({ d }) {
             </div>
           </div>
           <div className="d-cobre" aria-hidden="true"><div className="d-anel" /></div>
-          <p className="d-texto" aria-hidden="true">Atravesse o anel.</p>
+          <p className="d-texto" aria-hidden="true">Agora, veja os registros.</p>
         </div>
       </section>
 
