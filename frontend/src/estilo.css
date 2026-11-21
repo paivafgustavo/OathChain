@@ -13,6 +13,8 @@
 *,*::before,*::after{box-sizing:inherit}
 html,body{margin:0}
 html{scroll-behavior:smooth}
+/* com o Lenis ligado, ele mesmo suaviza: o smooth do CSS atrapalharia */
+html.lenis{scroll-behavior:auto}
 body{background:var(--bg);color:var(--text);font:400 16px/1.55 Inter,system-ui,sans-serif;min-height:100vh}
 h1,h2,h3{font-family:var(--fonte-titulo);font-weight:700;line-height:1.15;margin:0;letter-spacing:-.015em;color:var(--creme)}
 h1{font-size:clamp(30px,4.5vw,48px)}h2{font-size:clamp(26px,3.4vw,38px)}
@@ -22,7 +24,7 @@ small,.mut{color:var(--mut)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--ouro);outline-offset:2px}
 
 /* ===== Topo e menu (3 itens) ===== */
-.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#0B1730e8;backdrop-filter:blur(10px);border-bottom:1px solid var(--line2)}
+.topo{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#0B1730f2;border-bottom:1px solid var(--line2)}
 .topo-in{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
 .marca{display:flex;align-items:center;background:none;border:0;padding:0;cursor:pointer;min-height:44px}
 .marca img{height:28px;width:auto;display:block}

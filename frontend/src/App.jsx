@@ -9,6 +9,8 @@ import Registro from "./paginas/Registro";
 import Participar from "./paginas/Participar";
 import { Sala } from "./paginas/Assuntos";
 import Inicio from "./paginas/Inicio";
+import { useRolagemSuave, irAoTopo } from "./rolagem";
+import { useMovimentoReduzido } from "./movimento";
 
 // A página atual vem do endereço (#explorar/mapa, #registro/3, #assunto/Economia...)
 function useRota() {
@@ -20,7 +22,7 @@ function useRota() {
   useEffect(() => {
     const aoMudar = () => {
       setR(ler());
-      window.scrollTo(0, 0);
+      irAoTopo();
     };
     window.addEventListener("hashchange", aoMudar);
     return () => window.removeEventListener("hashchange", aoMudar);
@@ -44,6 +46,7 @@ const SECAO = {
 export default function App() {
   const d = useDados();
   const { rota, param } = useRota();
+  useRolagemSuave(useMovimentoReduzido());
   const ativo = SECAO[rota] || "inicio";
 
   let pagina;

@@ -58,7 +58,9 @@
 .d-livros span{border-radius:4px 4px 0 0;box-shadow:inset 0 3px 0 #ffffff30}
 .d-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .d-cobre,.d-texto{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.d-anel{width:300px;height:300px;border-radius:50%;box-shadow:0 0 0 3000px var(--bg);border:40px solid var(--ouro);opacity:0;transform:scale(26)}
+/* o anel cresce e a capa (fundo com um furo) some: antes era uma sombra de 3000 px ampliada 26x, pesada demais para a placa de vídeo */
+.d-cobre{background:radial-gradient(circle,transparent 0 110px,var(--bg) 112px);opacity:0}
+.d-anel{width:300px;height:300px;border-radius:50%;border:40px solid var(--ouro);opacity:0;transform:scale(8)}
 .d-texto{margin:0;align-items:flex-end;padding-bottom:110px;font:700 28px var(--fonte-titulo);color:var(--creme);opacity:0}
 
 /* ===== Animações comandadas pela rolagem (só onde o navegador suporta) ===== */
@@ -77,11 +79,15 @@
 @keyframes rotulo{0%,55%{opacity:0;transform:translateX(-20px)}75%,100%{opacity:1;transform:none}}
 @keyframes arco{from{stroke-dashoffset:880}to{stroke-dashoffset:0}}
 @keyframes passo{0%{opacity:0;transform:translateY(50px)}14%,86%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-50px)}}
-@keyframes atravessa{from{transform:scale(1);opacity:1}to{transform:scale(26);opacity:0}}
+@keyframes atravessa{from{transform:scale(1);opacity:1}to{transform:scale(8);opacity:0}}
+@keyframes cobre-some{0%{opacity:1}55%,100%{opacity:0}}
 @keyframes texto-some{0%{opacity:1}35%,100%{opacity:0}}
 @keyframes estante-vem{from{transform:scale(.6) translateY(80px);opacity:0}to{transform:none;opacity:1}}
 
 @supports (animation-timeline: view()){
+  /* cada peça animada vira uma camada própria: a placa de vídeo só move, sem redesenhar */
+  .elo,.fala,.dica,.rot,.pr,.d-anel,.d-cobre,.d-texto,.d-estante{will-change:transform,opacity}
+  .ex-cena,.ex-c{will-change:transform} /* sem opacity aqui: ela achataria o 3D da vista explodida */
   /* a 1ª cena está no topo da página: usa a rolagem da página (scroll) em pixels, desde o 0 */
   .tr-a .elo-creme{animation:vem-esq cubic-bezier(.3,.7,.2,1) both,some linear both;animation-timeline:scroll(root),scroll(root);animation-range:0px 210px,210px 226px}
   .tr-a .elo-ouro{animation:vem-dir cubic-bezier(.3,.7,.2,1) both,some linear both;animation-timeline:scroll(root),scroll(root);animation-range:0px 210px,210px 226px}
@@ -108,6 +114,7 @@
   .tr-c .pr3{animation:passo cubic-bezier(.4,0,.2,1) both;animation-timeline:--tc;animation-range:contain 50% contain 76%}
   .tr-c .pr4{animation:fala-fim cubic-bezier(.4,0,.2,1) both;animation-timeline:--tc;animation-range:contain 75% contain 100%}
 
+  .tr-d .d-cobre{animation:cobre-some linear both;animation-timeline:--td;animation-range:contain 0% contain 60%}
   .tr-d .d-anel{animation:atravessa cubic-bezier(.4,0,.2,1) both;animation-timeline:--td;animation-range:contain 0% contain 60%}
   .tr-d .d-texto{animation:texto-some cubic-bezier(.4,0,.2,1) both;animation-timeline:--td;animation-range:contain 0% contain 60%}
   .tr-d .d-estante{animation:estante-vem cubic-bezier(.4,0,.2,1) both;animation-timeline:--td;animation-range:contain 35% contain 85%}

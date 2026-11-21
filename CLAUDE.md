@@ -70,6 +70,7 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 - Cena.jsx: 1 ilustração SVG animada (SMIL) por assunto, usada nas caixas, na sala e no fundo das prateleiras; sem animação se o sistema pede reduzir movimento.
 - Removidas: Estante.jsx e Verificar.jsx (conteúdo foi para Explorar). Tirada a métrica "de acordo com a maioria" do painel do revisor (contrariava a decisão 3).
 - Arquivos do frontend usam CRLF: scripts de edição precisam normalizar as quebras.
+- Rolagem suave com inércia: Lenis (`src/rolagem.js`, ligado no App; desligado com reduzir movimento e no toque). Troca de página usa `irAoTopo()`, não `window.scrollTo`. Na abertura, evitar sombras gigantes, blur e backdrop-filter: tudo que anima é só transform/opacity.
 
 ## Armadilhas já encontradas
 - **Tamanho do contrato:** limite de 24.576 bytes; hoje ~23,3 KB com `viaIR` + `runs: 50`. Qualquer função nova pode estourar: conferir após mudar.
