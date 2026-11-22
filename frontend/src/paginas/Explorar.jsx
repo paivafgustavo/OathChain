@@ -1,24 +1,25 @@
-// Explorar: tudo o que foi registrado, em 5 formas de ver (antes eram 5 páginas no menu).
+// Explorar: tudo o que foi registrado, em 4 formas de ver (Lista, Estante, Mapa, Linha do tempo).
+// Cada assunto tem a sua sala (#assunto/Nome), aberta pelo nome do assunto na Estante.
 import { useState } from "react";
 import { ST, ASSUNTOS } from "../dados";
-import { Prateleira, Filtro, irPara } from "../componentes";
+import { Prateleira, Filtro, Legenda, irPara } from "../componentes";
 import { statusDe, rotuloStatus, formatarDia } from "../oathchain";
 import { SO_REVISOR_REGISTRA } from "../config";
 import Cena from "../Cena";
-import { Hub } from "./Assuntos";
 import Mapa from "./Mapa";
 
 const ABAS = [
   ["lista", "Lista"],
   ["estante", "Estante"],
-  ["assuntos", "Assuntos"],
   ["mapa", "Mapa"],
   ["linha", "Linha do tempo"],
 ];
 const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export default function Explorar({ d, aba: aba0 = "lista", q0 = "" }) {
-  const [aba, setAba] = useState(ABAS.some(([k]) => k === aba0) ? aba0 : "lista");
+  // a antiga aba "Assuntos" foi tirada: quem chegar por um link velho vai para a Estante
+  const abaPedida = aba0 === "assuntos" ? "estante" : aba0;
+  const [aba, setAba] = useState(ABAS.some(([k]) => k === abaPedida) ? abaPedida : "lista");
   const [q, setQ] = useState(q0);
   const [filtro, setFiltro] = useState("all");
   const { registros, agora } = d;
@@ -60,7 +61,7 @@ export default function Explorar({ d, aba: aba0 = "lista", q0 = "" }) {
         <input
           type="search"
           value={q}
-          onChange={(e) => { setQ(e.target.value); if (aba === "assuntos" || aba === "mapa") trocar("lista"); }}
+          onChange={(e) => { setQ(e.target.value); if (aba === "mapa") trocar("lista"); }}
           placeholder="Busque uma afirmação, assunto ou cidade. Ex.: inflação, desmatamento"
         />
       </label>
@@ -114,6 +115,7 @@ export default function Explorar({ d, aba: aba0 = "lista", q0 = "" }) {
           </>
         )}
 
+        {aba === "estante" && <Legenda />}
         {aba === "estante" &&
           assuntos.map((a) => {
             const lista = filtrados.filter((r) => r.assunto === a);
@@ -130,7 +132,6 @@ export default function Explorar({ d, aba: aba0 = "lista", q0 = "" }) {
             );
           })}
 
-        {aba === "assuntos" && <Hub d={d} />}
         {aba === "mapa" && <Mapa d={d} />}
         {aba === "linha" && (
           <>

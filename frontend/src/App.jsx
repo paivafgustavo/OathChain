@@ -36,7 +36,7 @@ const MENU = [
   ["explorar", "Explorar"],
   ["participar", "Participar"],
 ];
-const ABA_ANTIGA = { estante: "estante", mapa: "mapa", linha: "linha", assuntos: "assuntos", verificar: "lista" };
+const ABA_ANTIGA = { estante: "estante", mapa: "mapa", linha: "linha", assuntos: "estante", verificar: "lista" };
 const SECAO = {
   explorar: "explorar", estante: "explorar", mapa: "explorar", linha: "explorar", assuntos: "explorar", verificar: "explorar",
   assunto: "explorar", registro: "explorar", registrar: "explorar",

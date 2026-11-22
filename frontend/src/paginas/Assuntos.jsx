@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { T, SUB, ASSUNTOS } from "../dados";
-import { Prateleira, Filtro, irPara } from "../componentes";
+import { T, SUB } from "../dados";
+import { Prateleira, Filtro, Legenda, irPara } from "../componentes";
 import { statusDe } from "../oathchain";
 import Cena from "../Cena";
 import { useMovimentoReduzido } from "../movimento";
@@ -10,27 +10,6 @@ const pvDe = (registros, a) => {
   if (fin.length === 0) return null;
   return Math.round((fin.filter((r) => r.resultado === 1 || r.resultado === 4).length / fin.length) * 100);
 };
-
-// Caixas dos assuntos, cada uma com a sua cena (aba "Assuntos" do Explorar)
-export function Hub({ d }) {
-  const lista = [...ASSUNTOS, ...(d.registros.some((r) => r.assunto === "Outros") ? ["Outros"] : [])];
-  return (
-    <div className="hub">
-      {lista.map((k, i) => {
-        const n = d.registros.filter((r) => r.assunto === k).length;
-        return (
-          <button key={k} className="hubc inclina" style={{ animationDelay: i * 60 + "ms" }} onClick={() => irPara("assunto/" + encodeURIComponent(k))}>
-            <span className="hubc-cena"><Cena tema={k} /></span>
-            <span className="hubc-txt">
-              <b>{k}</b>
-              <small>{n} {n === 1 ? "registro" : "registros"}</small>
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 // Sala de um assunto: a cena grande no topo e a prateleira com a mesma cena na parede
 export function Sala({ d, nome }) {
@@ -48,8 +27,8 @@ export function Sala({ d, nome }) {
 
   return (
     <>
-      <button className="voltar" onClick={() => irPara("explorar/assuntos")}>
-        <span aria-hidden="true">←</span> Todos os assuntos
+      <button className="voltar" onClick={() => irPara("explorar/estante")}>
+        <span aria-hidden="true">←</span> Voltar à estante
       </button>
 
       <section className="sala-ban">
@@ -73,6 +52,7 @@ export function Sala({ d, nome }) {
       <Filtro valor={filtro} aoMudar={setFiltro} presentes={new Set(todos.map((r) => statusDe(r, d.agora)))} />
 
       <h2 className="sala-sub">A prateleira de {assunto}</h2>
+      <Legenda />
       {linhas.map((l, i) => (
         <div className="estante-moldura grande" key={i}>
           <div className="estante-fundo"><Cena tema={assunto} /></div>

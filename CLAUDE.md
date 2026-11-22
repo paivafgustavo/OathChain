@@ -67,7 +67,8 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 - Menu com 3 itens: Início, Explorar, Participar. Rotas antigas (#estante, #mapa, #linha, #assuntos, #verificar, #revisores, #revisor) viram atalhos para as abas novas (App.jsx).
 - Paleta da logo (azul-noite #0B1730, ouro #DAA14E, creme #F3EAD3), títulos em Sora. Tokens em estilo.css (:root).
 - Landing: abertura com CSS scroll-driven animations (inicio.css). A 1ª cena usa scroll(root) em px, porque o menu fixo atrasava a view-timeline. Sem suporte (Firefox) ou com reduzir movimento, as cenas aparecem prontas.
-- Cena.jsx: 1 ilustração SVG animada (SMIL) por assunto, usada nas caixas, na sala e no fundo das prateleiras; sem animação se o sistema pede reduzir movimento.
+- Cena.jsx: 1 ilustração SVG animada (SMIL) por assunto, usada na sala e no fundo das prateleiras; sem animação se o sistema pede reduzir movimento.
+- 22/11: tirada a aba "Assuntos" do Explorar (a sala de cada assunto abre pelo nome na Estante; #explorar/assuntos e #assuntos levam à Estante). Estante com legenda das cores (`Legenda` em componentes.jsx). Livro = capa escura + faixa fina no topo com a cor da situação. As variáveis do livro são `--lw/--lh/--lc/--ld`: NÃO usar `--w`/`--c` (colidem com as cores das situações). Cores das situações em estilo.css :root.
 - Removidas: Estante.jsx e Verificar.jsx (conteúdo foi para Explorar). Tirada a métrica "de acordo com a maioria" do painel do revisor (contrariava a decisão 3).
 - Arquivos do frontend usam CRLF: scripts de edição precisam normalizar as quebras.
 - Rolagem suave com inércia: Lenis (`src/rolagem.js`, ligado no App; desligado com reduzir movimento e no toque). Troca de página usa `irAoTopo()`, não `window.scrollTo`. Na abertura, evitar sombras gigantes, blur e backdrop-filter: tudo que anima é só transform/opacity.
@@ -97,6 +98,11 @@ Serviço de IA: `cd servico; npm install; npm start` (servidor + processamento) 
 - [ ] Verificar os contratos no Etherscan: `ETHERSCAN_API_KEY` no .env da raiz + `npx hardhat run scripts/verificar.js --network sepolia` (bytecode local já conferido: idêntico ao publicado)
 - [ ] IPFS também para o texto dos registros (precisa de upload pelo serviço; hoje o texto fica no contrato)
 - [ ] Gravar o vídeo (roteiro em `docs/ROTEIRO-DEMO.md`)
+- [ ] **PowerPoint para o pitch (26/11)** com o que foi discutido em 21/11 (base: `council-transcript-2026-11-21.md`). O Gustavo decidiu NÃO colocar essas seções no site, só nos slides:
+  - **Limitações:** precisão da IA 100% (10/10) junto com cobertura de 11% em notícias reais (sem créditos do Firecrawl a IA prefere "Inconclusiva"); dono com poderes e carteira única de IA (fase de teste → multisig/votação); veredito da IA é provisório e não é acusação; júri da demo = carteiras de teste do próprio Gustavo.
+  - **Quem sustenta:** jornais e TVs pagam para usar o OathChain como prova nas matérias e pela API (+ selo citável, relatório da IA, alertas). Registrar e ler é grátis; quem registra ou promete NÃO paga.
+  - **Quanto custa:** gás real de um registro na v6 convertido para mainnet e camada 2 (Base/Arbitrum); a receita da mídia banca o gás via relayer/paymaster.
+  - **Perguntas prováveis da banca:** "por que pagar se o dado na blockchain é público?" (paga pela facilidade: API, selo, relatório, alertas, suporte); "e se a IA errar sobre um político?" (provisório, recurso, júri, risco jurídico/LGPD); "isso é descentralizado com um dono?"; "o júri são carteiras suas?"; "por que blockchain e não um banco de dados?"
 - [x] Relatório final em `docs/RELATORIO.md` (atualizar a seção 6 quando a acurácia estiver completa)
 - [x] Decidido manter `definirRevisor` (documentado como porta de teste)
 - [ ] Conferir o enunciado oficial do bloco 5 (individual ou em grupo, prazo)

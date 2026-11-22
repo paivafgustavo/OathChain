@@ -3,8 +3,8 @@ import { VEREDITOS, statusDe, rotuloStatus } from "./oathchain";
 
 // Cores do veredito sobre o papel claro da página do registro
 export const COR_PAPEL = {
-  v: "#1f7a50", f: "#b3282d", c: "#8a5d00", s: "#5d5f66",
-  x: "#4e3d82", w: "#2f6db0", r: "#6b6b75", p: "#a85a0f", i: "#0f766e",
+  v: "#1f7a50", f: "#b3282d", c: "#8a5d00", s: "#7a4e2c",
+  x: "#4a505e", w: "#0e7490", r: "#6b7280", p: "#a3238a", i: "#6d28d9",
 };
 
 export const irPara = (rota) => {
@@ -32,10 +32,11 @@ export function Livro({ r, agora, atraso = 0 }) {
   return (
     <button
       className="bk"
-      style={{ "--h": h + "px", "--w": w + "px", "--c": `var(${ST[chave][1]})`, "--d": atraso + "ms" }}
+      style={{ "--lh": h + "px", "--lw": w + "px", "--lc": `var(${ST[chave][1]})`, "--ld": atraso + "ms" }}
       data-s={chave}
       onClick={() => irPara("registro/" + r.id)}
       aria-label={`${nome} (${r.ano}): ${rotuloStatus(r, agora)}`}
+      title={`${rotuloStatus(r, agora)}: ${r.texto}`}
     >
       {chave === "x" && <i className="seal" />}
       <span>
@@ -54,6 +55,35 @@ export function Prateleira({ registros, agora, vazio = "Nenhum registro aqui ain
         registros.map((r, i) => <Livro key={r.id} r={r} agora={agora} atraso={i * 40} />)
       )}
     </div>
+  );
+}
+
+// Legenda das cores das lombadas: o que cada cor quer dizer
+const LEGENDA = [
+  ["v", "A afirmação é verdadeira ou a promessa foi cumprida"],
+  ["f", "A afirmação é falsa ou a promessa não foi cumprida"],
+  ["p", "A promessa foi cumprida só em parte"],
+  ["w", "Um júri sorteado está julgando agora"],
+  ["c", "Já tem veredito, mas ainda pode ser contestado"],
+  ["i", "A IA deu um veredito provisório; ainda dá para recorrer"],
+  ["r", "Esperando a análise dos agentes de IA"],
+  ["s", "O júri não chegou a uma maioria"],
+  ["x", "Corrigido por um registro mais novo (tem um selo dourado)"],
+];
+
+export function Legenda() {
+  return (
+    <details className="legenda" open>
+      <summary>O que significa cada cor?</summary>
+      <ul>
+        {LEGENDA.map(([k, explica]) => (
+          <li key={k}>
+            <i style={{ background: `var(${ST[k][1]})` }} aria-hidden="true" />
+            <span><b>{ST[k][0]}</b> <small>{explica}</small></span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
