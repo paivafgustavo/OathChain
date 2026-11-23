@@ -85,6 +85,10 @@
 @keyframes texto-some{0%{opacity:1}35%,100%{opacity:0}}
 @keyframes estante-vem{from{transform:scale(.6) translateY(80px);opacity:0}to{transform:none;opacity:1}}
 
+/* As cenas presas na tela só existem se o navegador suporta animação por rolagem E a pessoa
+   não pediu "reduzir movimento". Sem o 2º teste, as frases ficavam empilhadas (position:absolute)
+   e todas visíveis, porque o bloco de reduzir movimento desliga as animações que as escondem. */
+@media (prefers-reduced-motion:no-preference){
 @supports (animation-timeline: view()){
   /* cada peça animada vira uma camada própria: a placa de vídeo só move, sem redesenhar */
   .elo,.fala,.dica,.rot,.pr,.d-anel,.d-cobre,.d-texto,.d-estante{will-change:transform,opacity}
@@ -123,6 +127,7 @@
   .tr-d .d-anel{animation:atravessa cubic-bezier(.4,0,.2,1) both;animation-timeline:--td;animation-range:contain 0% contain 60%}
   .tr-d .d-texto{animation:texto-some cubic-bezier(.4,0,.2,1) both;animation-timeline:--td;animation-range:contain 0% contain 60%}
   .tr-d .d-estante{animation:estante-vem cubic-bezier(.4,0,.2,1) both;animation-timeline:--td;animation-range:contain 35% contain 85%}
+}
 }
 /* Sem suporte (Firefox, por enquanto): sem trilhos altos, cada cena aparece pronta */
 @supports not (animation-timeline: view()){
