@@ -25,7 +25,7 @@ async function baixarTexto(url) {
   throw ultimoErro;
 }
 
-const NOMES_AGENTES = { "Avaliador de fontes": "🔎 Avaliador de fontes", Analista: "🧠 Analista", Contraditor: "⚖️ Contraditor" };
+const NOMES_AGENTES = { "Avaliador de fontes": "Avaliador de fontes", Analista: "Analista", Contraditor: "Contraditor" };
 
 // ---------------------------------------------------------------
 // Verificação automática (IA)
@@ -60,7 +60,7 @@ export function PainelIA({ r, d }) {
     if (r.tipo === 0 && r.estado === 0) {
       return (
         <div className="card painel">
-          <h3>🤖 Verificação automática</h3>
+          <h3>Verificação automática</h3>
           <p className="mut" style={{ margin: 0 }}>
             Aguardando os 4 agentes de IA. Quando terminarem, o veredito aparece aqui como <b>provisório</b> e os revisores podem recorrer.
           </p>
@@ -91,7 +91,7 @@ export function PainelIA({ r, d }) {
 
   return (
     <div className="card painel">
-      <h3>🤖 Verificação automática (4 agentes de IA)</h3>
+      <h3>Verificação automática: 4 agentes de IA</h3>
       <p style={{ margin: "0 0 8px" }}>
         A IA concluiu <b>{VEREDITOS[ia.veredito]}</b> com <b>{ia.confianca}%</b> de confiança em {formatarData(ia.em)}.
         {provisoria && " Este veredito é PROVISÓRIO: humanos podem recorrer até o fim da janela."}
@@ -138,13 +138,13 @@ export function PainelIA({ r, d }) {
         <div className="relatorio">
           <Aviso tipo={rel.confere ? "ok" : "erro"}>
             {rel.confere
-              ? "✔ Relatório íntegro: o hash do texto baixado é idêntico ao gravado na blockchain."
-              : "✖ ATENÇÃO: o texto baixado NÃO bate com o hash da blockchain. Não confie neste relatório."}
+              ? "Relatório íntegro: o hash do texto baixado é idêntico ao gravado na blockchain."
+              : "Atenção: o texto baixado NÃO bate com o hash da blockchain. Não confie neste relatório."}
           </Aviso>
           {rel.dados.simulado && <Aviso>Este relatório foi gerado em MODO DEMONSTRAÇÃO (respostas simuladas).</Aviso>}
           {rel.dados.filtro && !rel.dados.filtro.verificavel && (
             <Aviso>
-              🧹 O filtro de fato vs. opinião classificou o texto como <b>{rel.dados.filtro.tipo === "previsao" ? "previsão" : "opinião"}</b>
+              O filtro de fato vs. opinião classificou o texto como <b>{rel.dados.filtro.tipo === "previsao" ? "previsão" : "opinião"}</b>
               {" "}({rel.dados.filtro.motivos.join("; ")}). Os agentes não foram chamados e a decisão fica com o júri humano.
             </Aviso>
           )}
@@ -160,7 +160,7 @@ export function PainelIA({ r, d }) {
             <p style={{ fontSize: 14 }}>Ajustes da regra de consolidação: {rel.dados.resultado.motivos.join(" ")}</p>
           )}
           <details>
-            <summary>🔎 Pesquisador: o que foi buscado ({rel.dados.evidencias.length} fontes)</summary>
+            <summary>Pesquisador: o que foi buscado ({rel.dados.evidencias.length} fontes)</summary>
             <p className="mut" style={{ fontSize: 14 }}>Consultas: {rel.dados.consultas.join(" · ")}</p>
             <ul>
               {rel.dados.evidencias.map((e) => {
@@ -177,7 +177,7 @@ export function PainelIA({ r, d }) {
             </ul>
           </details>
           <details>
-            <summary>🧠 Resumo do analista ({rel.dados.especialidade}) e objeções do contraditor</summary>
+            <summary>Resumo do analista ({rel.dados.especialidade}) e objeções do contraditor</summary>
             <p style={{ fontSize: 14 }}>{rel.dados.agentes.analista.resumo}</p>
             {(rel.dados.agentes.contraditor.objecoes || []).length > 0 && (
               <ul>{rel.dados.agentes.contraditor.objecoes.map((o, i) => <li key={i}>{o}</li>)}</ul>
@@ -283,7 +283,7 @@ export function PainelJuri({ r, d }) {
 
   return (
     <div className="card painel">
-      <h3>🎲 Júri sorteado · {j.secreto ? "voto secreto" : "voto aberto com justificativa"}</h3>
+      <h3>Júri sorteado ·{j.secreto ? "voto secreto" : "voto aberto com justificativa"}</h3>
       <ol className="fases">
         <li className={fase === "sorteio" ? "on" : "feito"}>1. Sorteio</li>
         {j.secreto ? (

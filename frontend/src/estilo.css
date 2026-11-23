@@ -19,6 +19,8 @@ html.lenis{scroll-behavior:auto}
 body{background:var(--bg);color:var(--text);font:400 16px/1.55 Inter,system-ui,sans-serif;min-height:100vh}
 h1,h2,h3{font-family:var(--fonte-titulo);font-weight:700;line-height:1.15;margin:0;letter-spacing:-.015em;color:var(--creme)}
 h1{font-size:clamp(30px,4.5vw,48px)}h2{font-size:clamp(26px,3.4vw,38px)}
+/* texto só para leitores de tela (some da tela, continua acessível) */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 button{font:inherit;color:inherit}
 a{color:var(--ouro)}
 small,.mut{color:var(--mut)}

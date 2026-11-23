@@ -19,6 +19,7 @@
 .simbolo-ponto{transform-box:fill-box;transform-origin:center}
 .falas{position:relative;width:100%;max-width:900px;text-align:center;display:grid;gap:6px}
 .fala{font-size:clamp(34px,5vw,68px);line-height:1.05;letter-spacing:-.03em}
+.fala{margin:0;font-family:var(--fonte-titulo);font-weight:700;color:var(--creme);text-wrap:balance}
 .f3{color:var(--ouro)}
 .dica{position:absolute;bottom:96px;margin:0;color:var(--mut);font-size:14px}
 
@@ -89,15 +90,19 @@
   .elo,.fala,.dica,.rot,.pr,.d-anel,.d-cobre,.d-texto,.d-estante{will-change:transform,opacity}
   .ex-cena,.ex-c{will-change:transform} /* sem opacity aqui: ela achataria o 3D da vista explodida */
   /* a 1ª cena está no topo da página: usa a rolagem da página (scroll) em pixels, desde o 0 */
-  .tr-a .elo-creme{animation:vem-esq cubic-bezier(.3,.7,.2,1) both,some linear both;animation-timeline:scroll(root),scroll(root);animation-range:0px 210px,210px 226px}
-  .tr-a .elo-ouro{animation:vem-dir cubic-bezier(.3,.7,.2,1) both,some linear both;animation-timeline:scroll(root),scroll(root);animation-range:0px 210px,210px 226px}
-  .tr-a .elo-final{animation:aparece linear both;animation-timeline:scroll(root);animation-range:210px 226px}
-  .tr-a .simbolo-ponto{animation:estala ease-out both;animation-timeline:scroll(root);animation-range:200px 260px}
+  /* Coreografia em 3 tempos, logo e frase juntas:
+     1) 0-110px:   "Informações públicas,"    anéis parados, separados
+     2) 110-246px: "gravadas na blockchain"   anéis voam e se entrelaçam (a corrente se forma)
+     3) 250px+:    "e verificadas."           o ponto estala no C, como um selo */
+  .tr-a .elo-creme{animation:vem-esq cubic-bezier(.3,.7,.2,1) both,some linear both;animation-timeline:scroll(root),scroll(root);animation-range:110px 230px,230px 246px}
+  .tr-a .elo-ouro{animation:vem-dir cubic-bezier(.3,.7,.2,1) both,some linear both;animation-timeline:scroll(root),scroll(root);animation-range:110px 230px,230px 246px}
+  .tr-a .elo-final{animation:aparece linear both;animation-timeline:scroll(root);animation-range:230px 246px}
+  .tr-a .simbolo-ponto{animation:estala ease-out both;animation-timeline:scroll(root);animation-range:250px 300px}
   .tr-a .falas{display:block;min-height:150px}
   .tr-a .fala{position:absolute;inset:0 0 auto}
-  .tr-a .f1{animation:fala-sai cubic-bezier(.4,0,.2,1) both;animation-timeline:scroll(root);animation-range:0px 150px}
-  .tr-a .f2{animation:fala cubic-bezier(.4,0,.2,1) both;animation-timeline:scroll(root);animation-range:130px 290px}
-  .tr-a .f3{animation:fala-fim cubic-bezier(.4,0,.2,1) both;animation-timeline:scroll(root);animation-range:270px 400px}
+  .tr-a .f1{animation:fala-sai cubic-bezier(.4,0,.2,1) both;animation-timeline:scroll(root);animation-range:0px 130px}
+  .tr-a .f2{animation:fala cubic-bezier(.4,0,.2,1) both;animation-timeline:scroll(root);animation-range:100px 260px}
+  .tr-a .f3{animation:fala-fim cubic-bezier(.4,0,.2,1) both;animation-timeline:scroll(root);animation-range:250px 350px}
   .tr-a .dica{animation:some linear both;animation-timeline:scroll(root);animation-range:0px 60px}
 
   .tr-b .ex-cena{animation:ex-gira cubic-bezier(.4,0,.2,1) both;animation-timeline:--tb;animation-range:contain 0% contain 55%}

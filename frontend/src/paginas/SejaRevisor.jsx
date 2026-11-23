@@ -80,7 +80,7 @@ export default function SejaRevisor({ d, embutido = false }) {
               <div style={{ marginTop: 14 }}>
                 <p style={{ margin: "0 0 4px" }}>Votos de prova: <b>{meu.votosProva}</b> de {info.minVotos}</p>
                 <div className="barra-conf"><i style={{ width: barra(meu.votosProva, info.minVotos) + "%" }} /></div>
-                <p style={{ margin: "10px 0 4px" }}>Tempo de prova: {agora >= meu.desde + info.periodo ? "cumprido ✔" : `faltam ${restante(meu.desde + info.periodo, agora)}`}</p>
+                <p style={{ margin: "10px 0 4px" }}>Tempo de prova: {agora >= meu.desde + info.periodo ? "cumprido" : `faltam ${restante(meu.desde + info.periodo, agora)}`}</p>
                 <p style={{ margin: "4px 0" }}>Faltas: <b>{meu.faltas}</b> (máximo {info.maxFaltas})</p>
                 <p style={{ margin: "4px 0" }}>Depósito atual: <b>{formatEther(meu.deposito)} ETH</b></p>
                 <div className="acts2">

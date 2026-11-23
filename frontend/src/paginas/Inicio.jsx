@@ -36,10 +36,13 @@ export default function Inicio({ d }) {
             <Simbolo parte="entrelacado" className="elo elo-final" rotulo="Símbolo do OathChain: um anel creme entrelaçado a um C dourado, com um ponto entre as pontas do C" />
             <Simbolo parte="ponto" className="elo elo-ponto" />
           </div>
-          <div className="falas">
-            <h1 className="fala f1">Uma promessa.</h1>
-            <h1 className="fala f2">Um compromisso público.</h1>
-            <h1 className="fala f3">Uma corrente que ninguém quebra.</h1>
+          {/* A frase que diz o que é o site, em 3 partes que aparecem conforme a rolagem.
+              O h1 guarda a frase inteira para leitores de tela; as partes são só visuais. */}
+          <h1 className="sr-only">Informações públicas, gravadas na blockchain e verificadas.</h1>
+          <div className="falas" aria-hidden="true">
+            <p className="fala f1">Informações públicas,</p>
+            <p className="fala f2">gravadas na blockchain</p>
+            <p className="fala f3">e verificadas.</p>
           </div>
           <p className="dica" aria-hidden="true">Role para ver ↓</p>
         </div>
@@ -110,7 +113,6 @@ export default function Inicio({ d }) {
             </div>
             <div className="d-cta">
               <button className="main-btn" onClick={() => irPara("explorar/estante")}>Explorar registros</button>
-              <button className="wallet" onClick={() => irPara("participar")}>Quero participar</button>
             </div>
           </div>
           <div className="d-cobre" aria-hidden="true"><div className="d-anel" /></div>

@@ -82,8 +82,8 @@ export default function Registrar({ d, texto0 }) {
       </p>
       <form className="f card" onSubmit={enviar}>
         <div className="tabs">
-          <button type="button" aria-pressed={tipo === "afirmacao"} onClick={() => setTipo("afirmacao")}>🗣️ Afirmação</button>
-          <button type="button" aria-pressed={tipo === "promessa"} onClick={() => setTipo("promessa")}>🤝 Promessa</button>
+          <button type="button" aria-pressed={tipo === "afirmacao"} onClick={() => setTipo("afirmacao")}>Afirmação</button>
+          <button type="button" aria-pressed={tipo === "promessa"} onClick={() => setTipo("promessa")}>Promessa</button>
         </div>
 
         <label>
