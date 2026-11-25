@@ -337,3 +337,36 @@ a.lk2{color:var(--acc);text-decoration:underline;cursor:pointer}
 .linha-texto:hover{color:var(--ouro)}
 .linha-v .selo-st{--cor:inherit;color:var(--cor);border-color:var(--cor)}
 @media (prefers-reduced-motion:reduce){.linha-v li{animation:none}}
+
+/* ===================== Versão para celular (até 720 px) =====================
+   O computador não muda. No celular: topo numa linha só (logo + carteira),
+   menu numa barra fixa embaixo (alcance do polegar), margens menores. */
+.menu-ic{display:none}
+.etq{line-height:1.4}
+@media (max-width:720px){
+  .topo-in{padding:8px 16px;gap:12px;flex-wrap:nowrap;justify-content:space-between}
+  .marca img{height:24px}
+  .wallet{min-height:40px;padding:0 12px;font-size:14px;white-space:nowrap}
+  .menu{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;flex:none;
+    padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));background:#0B1730f7;border-top:1px solid var(--line)}
+  .menu button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;padding:0;font-size:12px;border-radius:12px}
+  .menu button[aria-current=page]{background:none;color:var(--ouro)}
+  .menu-ic{display:block;width:22px;height:22px}
+  /* espaço para a barra de baixo não cobrir o fim da página */
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+  main{padding:20px 16px 40px}
+  .rodape{padding:24px 16px}
+  .card{padding:18px;border-radius:16px}
+  /* Explorar: as 4 abas numa linha só */
+  .abas{flex-wrap:nowrap}
+  .abas button{flex:1 1 auto;padding:0 8px;font-size:14px;white-space:nowrap}
+  .exp-topo{margin-bottom:16px}
+  .busca{min-height:54px;margin-bottom:14px}
+  .busca input{font-size:16px;padding:14px 0}
+  .estante-tit{font-size:20px}
+  .reg-veredito{padding:20px}
+  .dobra>summary{padding:0 16px;min-height:56px;font-size:16px}
+  .dobra>div{padding:0 16px 16px}
+  .sala-ban{height:240px;border-radius:20px}
+  .sala-ban-txt{padding:20px}
+}

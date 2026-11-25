@@ -165,4 +165,32 @@
 .ini-final>div{flex:1 1 420px}
 .ini-final h2{margin-bottom:10px}
 .ini-final p{margin:0;max-width:52ch}
-@media (prefers-reduced-motion:reduce){.faixa{animation:none;flex-wrap:wrap;width:auto}}
+@media (prefers-reduced-motion:reduce){.faixa{animation:none;flex-wrap:wrap;width:auto}
+  /* parada, a faixa não precisa das cópias que servem só para o carrossel dar a volta */
+  .faixa-c[aria-hidden=true]{display:none}}
+
+/* ===== Abertura no celular (até 720 px) =====
+   O palco é do tamanho da tela: em cima fica o topo, embaixo a barra do menu.
+   A vista explodida encolhe para caber junto com o texto. */
+@media (max-width:720px){
+  .palco{padding:68px 16px 84px}
+  .palco-lado{flex-direction:column;flex-wrap:nowrap;gap:14px}
+  .fala{font-size:clamp(30px,9vw,40px)}
+  .explosao{height:300px;width:100%;transform:scale(.78);margin:-20px 0}
+  .ex-legenda{flex:none;gap:8px}
+  .ex-legenda h2{font-size:24px}
+  .ex-legenda .rot{font-size:14px;line-height:1.45}
+  .anel-passos{width:min(190px,48vw)}
+  .passos-rol{flex:none;width:100%;max-width:420px}
+  .tr-c .passos-rol{height:190px}
+  .ex-legenda{width:100%;max-width:420px}
+  .dica{bottom:136px}
+  .pr h3{font-size:26px}
+  .d-estante{gap:20px}
+  .d-livros{padding:0 8px;gap:4px}
+  .d-texto{padding-bottom:140px;font-size:24px}
+  .ini-bloco{padding:44px 16px}
+  .ini-faixa{padding:40px 0}
+  .faixa-c{width:270px}
+  .ini-final{padding:26px 20px;border-radius:20px}
+}

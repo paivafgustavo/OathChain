@@ -71,9 +71,12 @@ const LEGENDA = [
   ["x", "Corrigido por um registro mais novo (tem um selo dourado)"],
 ];
 
+// No computador a legenda já vem aberta; no celular vem fechada para não empurrar a estante para baixo
+const LEGENDA_ABERTA = typeof window !== "undefined" && window.matchMedia("(min-width: 721px)").matches;
+
 export function Legenda() {
   return (
-    <details className="legenda" open>
+    <details className="legenda" open={LEGENDA_ABERTA}>
       <summary>O que significa cada cor?</summary>
       <ul>
         {LEGENDA.map(([k, explica]) => (

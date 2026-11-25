@@ -36,6 +36,12 @@ const MENU = [
   ["explorar", "Explorar"],
   ["participar", "Participar"],
 ];
+// Ícones do menu: só aparecem no celular, onde o menu vira uma barra fixa embaixo da tela
+const ICONE = {
+  inicio: <path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" />,
+  explorar: <><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></>,
+  participar: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" /><path d="M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.4c1.6.7 2.7 2.3 3 4.6" /></>,
+};
 const ABA_ANTIGA = { estante: "estante", mapa: "mapa", linha: "linha", assuntos: "estante", verificar: "lista" };
 const SECAO = {
   explorar: "explorar", estante: "explorar", mapa: "explorar", linha: "explorar", assuntos: "explorar", verificar: "explorar",
@@ -69,6 +75,7 @@ export default function App() {
           <nav className="menu" aria-label="Principal">
             {MENU.map(([k, nome]) => (
               <button key={k} aria-current={ativo === k ? "page" : undefined} onClick={() => { window.location.hash = k; }}>
+                <svg className="menu-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONE[k]}</svg>
                 {nome}
               </button>
             ))}
