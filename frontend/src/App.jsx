@@ -81,7 +81,15 @@ export default function App() {
             ))}
           </nav>
           {d.conta ? (
-            <button className="wallet on" onClick={d.escolherContas} title="Trocar de conta">{abreviar(d.conta)}</button>
+            <span className="carteira">
+              <button className="wallet on" onClick={d.escolherContas} title="Trocar de conta">{abreviar(d.conta)}</button>
+              <button className="wallet sair" onClick={d.desconectar} title="Desconectar carteira" aria-label="Desconectar carteira">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" />
+                </svg>
+                <span className="sair-txt">Desconectar</span>
+              </button>
+            </span>
           ) : (
             <button className="wallet" onClick={d.conectar}>Conectar carteira</button>
           )}

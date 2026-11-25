@@ -343,10 +343,18 @@ a.lk2{color:var(--acc);text-decoration:underline;cursor:pointer}
    menu numa barra fixa embaixo (alcance do polegar), margens menores. */
 .menu-ic{display:none}
 .etq{line-height:1.4}
+/* carteira conectada: endereço (troca de conta) + Desconectar */
+.carteira{display:inline-flex;gap:8px;align-items:center}
+.wallet.sair{border-color:var(--line);color:var(--mut)}
+.wallet.sair:hover{border-color:var(--f);color:var(--creme)}
+.wallet.sair svg{width:18px;height:18px;flex:none}
 @media (max-width:720px){
   .topo-in{padding:8px 16px;gap:12px;flex-wrap:nowrap;justify-content:space-between}
   .marca img{height:24px}
   .wallet{min-height:40px;padding:0 12px;font-size:14px;white-space:nowrap}
+  .carteira{gap:6px}
+  .wallet.sair{padding:0 10px}
+  .sair-txt{display:none}
   .menu{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;flex:none;
     padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));background:#0B1730f7;border-top:1px solid var(--line)}
   .menu button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;padding:0;font-size:12px;border-radius:12px}

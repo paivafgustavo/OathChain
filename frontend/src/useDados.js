@@ -65,7 +65,8 @@ export function useDados() {
       let contaAtual = null;
       if (window.ethereum) {
         const contas = await window.ethereum.request({ method: "eth_accounts" });
-        contaAtual = contas[0] || null;
+        // Depois de "Desconectar", o site ignora a conta até a pessoa conectar de novo
+        contaAtual = desconectadoAqui() ? null : contas[0] || null;
       }
       setConta(contaAtual);
 
@@ -110,12 +111,26 @@ export function useDados() {
       return;
     }
     try {
+      marcarDesconectado(false);
       await new BrowserProvider(window.ethereum).send("eth_requestAccounts", []);
       await atualizar();
     } catch (e) {
       console.error(e);
       setErro("A conexão foi cancelada ou falhou.");
     }
+  }
+
+  // Desconecta: pede à MetaMask para retirar a permissão do site (wallet_revokePermissions).
+  // Carteiras que não têm esse pedido: o site só "esquece" a conta (fica marcado neste navegador).
+  async function desconectar() {
+    setErro("");
+    marcarDesconectado(true);
+    try {
+      await window.ethereum?.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] });
+    } catch (e) {
+      console.warn("A carteira não aceitou retirar a permissão; o site só esqueceu a conta.", e);
+    }
+    await atualizar();
   }
 
   // Abre a escolha de contas da MetaMask (para liberar várias contas de uma vez)
@@ -194,6 +209,7 @@ export function useDados() {
     atualizar,
     conectar,
     escolherContas,
+    desconectar,
     trocarParaSepolia,
     lerContrato,
     obterContrato,
@@ -201,4 +217,13 @@ export function useDados() {
     lerGestao,
     obterGestao,
   };
+}
+
+// Marca, só neste navegador, que a pessoa pediu para desconectar (o localStorage pode estar bloqueado: por isso o try)
+const CHAVE_DESCONECTADO = "oathchain-desconectado";
+function desconectadoAqui() {
+  try { return localStorage.getItem(CHAVE_DESCONECTADO) === "1"; } catch { return false; }
+}
+function marcarDesconectado(sim) {
+  try { if (sim) localStorage.setItem(CHAVE_DESCONECTADO, "1"); else localStorage.removeItem(CHAVE_DESCONECTADO); } catch { /* sem armazenamento: segue sem marcar */ }
 }
